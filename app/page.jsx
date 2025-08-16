@@ -1,5 +1,5 @@
 'use client';
-import React, { useMemo, useState } from 'react';
+import React, { useMemo, useState, useEffect } from 'react';
 
 const TYPES = [
   { key: 'tegnspråk', label: 'Tegnspråk' },
@@ -22,6 +22,7 @@ function daysFromNow(n) {
 }
 
 const SEED = [
+  // eksisterende
   {
     id: 'A1',
     title: 'UiO – forelesning PED1100',
@@ -77,6 +78,62 @@ const SEED = [
     location: 'Oslo',
     required_interpreters: 2,
   },
+  // ekstra dummy-data
+  {
+    id: 'A6',
+    title: 'Kurs – arbeidsliv og rettigheter',
+    client: 'LO',
+    type: 'skrivetolking',
+    status: 'inviting',
+    start: daysFromNow(2).toISOString(),
+    end: new Date(daysFromNow(2).getTime() + 2 * 60 * 60 * 1000).toISOString(),
+    location: 'Oslo',
+    required_interpreters: 2,
+  },
+  {
+    id: 'A7',
+    title: 'Foreldremøte – grunnskole',
+    client: 'Kommune',
+    type: 'tegnspråk',
+    status: 'inviting',
+    start: daysFromNow(5).toISOString(),
+    end: new Date(daysFromNow(5).getTime() + 90 * 60 * 1000).toISOString(),
+    location: 'Kongsberg',
+    required_interpreters: 2,
+  },
+  {
+    id: 'A8',
+    title: 'Legebesøk – spesialist',
+    client: 'Viken HF',
+    type: 'tegn_som_støtte',
+    status: 'partly_filled',
+    start: daysFromNow(1).toISOString(),
+    end: new Date(daysFromNow(1).getTime() + 60 * 60 * 1000).toISOString(),
+    location: 'Drammen',
+    required_interpreters: 2,
+  },
+  {
+    id: 'A9',
+    title: 'Workshop – inkluderende formidling',
+    client: 'Kulturetaten',
+    type: 'skrivetolking',
+    status: 'inviting',
+    start: daysFromNow(10).toISOString(),
+    end: new Date(daysFromNow(10).getTime() + 2 * 60 * 60 * 1000).toISOString(),
+    location: 'Oslo',
+    required_interpreters: 2,
+  },
+  {
+    id: 'A10',
+    title: 'Universitet – labøvelse',
+    client: 'UiB',
+    type: 'tegnspråk',
+    status: 'staffed',
+    start: daysFromNow(4).toISOString(),
+    end: new Date(daysFromNow(4).getTime() + 3 * 60 * 60 * 1000).toISOString(),
+    location: 'Bergen',
+    required_interpreters: 2,
+  },
 ];
 
 function fmt(dateIso) {
@@ -98,10 +155,18 @@ function toggle(arr, value) {
 export default function Page() {
   const [q, setQ] = useState('');
   const [typeSel, setTypeSel] = useState([]);
-  const [statusSel, setStatusSel] = useState(['inviting', 'partly_filled']);
+  const [statusSel, setStatusSel] = useState(['inviting', 'partly_filled']); // default: bare ledige
   const [from, setFrom] = useState('');
   const [to, setTo] = useState('');
   const [sortAsc, setSortAsc] = useState(true);
+  const [rushOnly, setRushOnly] = useState(false); // HASTER
+  const [role, setRole] = useState('tolk'); // tolkes som default
+
+  // Les rolle fra cookie (settes i middleware etter innlogging)
+  useEffect(() => {
+    const m = document.cookie.match(/(?:^|; )role=([^;]+)/);
+    if (m && (m[1] === 'admin' || m[1] === 'tolk')) setRole(m[1]);
+  }, []);
 
   const filtered = useMemo(() => {
     let data = [...SEED];
@@ -120,10 +185,15 @@ export default function Page() {
       data = data.filter((a) => typeSel.includes(a.type));
     }
 
-    if (statusSel.length > 0) {
-      data = data.filter((a) => statusSel.includes(a.status));
+    // Skjul bemannede for tolker helt
+    if (role === 'tolk') {
+      data = data.filter((a) => a.status !== 'staffed');
+    } else {
+      // Admin kan filtrere på statusSel
+      if (statusSel.length > 0) data = data.filter((a) => statusSel.includes(a.status));
     }
 
+    // Dato-overlapp
     const fromTs = from ? new Date(from + 'T00:00:00').getTime() : null;
     const toTs = to ? new Date(to + 'T23:59:59').getTime() : null;
     if (fromTs || toTs) {
@@ -135,6 +205,12 @@ export default function Page() {
       });
     }
 
+    // Haster = starter innen 3 dager
+    if (rushOnly) {
+      const limit = daysFromNow(3).getTime() + (24 * 60 * 60 * 1000 - 1);
+      data = data.filter((a) => new Date(a.start).getTime() <= limit && new Date(a.start).getTime() >= Date.now());
+    }
+
     data.sort((a, b) => {
       const da = new Date(a.start).getTime();
       const db = new Date(b.start).getTime();
@@ -142,23 +218,21 @@ export default function Page() {
     });
 
     return data;
-  }, [q, typeSel, statusSel, from, to, sortAsc]);
+  }, [q, typeSel, statusSel, from, to, sortAsc, rushOnly, role]);
 
   return (
     <div className="min-h-screen bg-gray-50 p-6">
       <div className="max-w-5xl mx-auto space-y-6">
         <header className="flex items-center justify-between">
-          <h1 className="text-2xl font-bold">Tolke- & Team-koordinator — prototype</h1>
-          <div>
+          <h1 className="text-2xl font-bold">Tegnsatt — ledige oppdrag</h1>
+          <div className="flex items-center gap-2">
+            {/* Vis rolleindikator for demo */}
+            <span className="text-xs text-gray-500">Rolle: {role}</span>
             <button
               className="px-3 py-2 rounded-xl border text-sm hover:bg-white"
               onClick={() => {
-                setQ('');
-                setTypeSel([]);
-                setStatusSel(['inviting', 'partly_filled']);
-                setFrom('');
-                setTo('');
-                setSortAsc(true);
+                setQ(''); setTypeSel([]); setStatusSel(['inviting','partly_filled']);
+                setFrom(''); setTo(''); setSortAsc(true); setRushOnly(false);
               }}
             >
               Nullstill filtre
@@ -202,6 +276,7 @@ export default function Page() {
             </div>
           </div>
 
+          {/* Type */}
           <div>
             <div className="text-sm text-gray-600 mb-2">Type</div>
             <div className="flex flex-wrap gap-2">
@@ -215,9 +290,7 @@ export default function Page() {
                       : 'bg-white hover:bg-gray-50')
                   }
                   onClick={() =>
-                    setTypeSel((arr) =>
-                      arr.includes(t.key) ? arr.filter((v) => v !== t.key) : [...arr, t.key]
-                    )
+                    setTypeSel((arr) => toggle(arr, t.key))
                   }
                   aria-pressed={typeSel.includes(t.key)}
                 >
@@ -227,32 +300,46 @@ export default function Page() {
             </div>
           </div>
 
-          <div>
-            <div className="text-sm text-gray-600 mb-2">Status</div>
-            <div className="flex flex-wrap gap-2">
-              {STATUS.map((s) => (
-                <button
-                  key={s.key}
-                  className={
-                    'px-3 py-1.5 rounded-full border text-sm ' +
-                    (statusSel.includes(s.key)
-                      ? 'bg-gray-900 text-white border-gray-900'
-                      : 'bg-white hover:bg-gray-50')
-                  }
-                  onClick={() =>
-                    setStatusSel((arr) =>
-                      arr.includes(s.key) ? arr.filter((v) => v !== s.key) : [...arr, s.key]
-                    )
-                  }
-                  aria-pressed={statusSel.includes(s.key)}
-                >
-                  {s.label}
-                </button>
-              ))}
+          {/* Status (kun admin får velge Bemannet / se filter) */}
+          {role === 'admin' && (
+            <div>
+              <div className="text-sm text-gray-600 mb-2">Status</div>
+              <div className="flex flex-wrap gap-2">
+                {STATUS.map((s) => (
+                  <button
+                    key={s.key}
+                    className={
+                      'px-3 py-1.5 rounded-full border text-sm ' +
+                      (statusSel.includes(s.key)
+                        ? 'bg-gray-900 text-white border-gray-900'
+                        : 'bg-white hover:bg-gray-50')
+                    }
+                    onClick={() => setStatusSel((arr) => toggle(arr, s.key))}
+                    aria-pressed={statusSel.includes(s.key)}
+                  >
+                    {s.label}
+                  </button>
+                ))}
+              </div>
             </div>
+          )}
+
+          {/* Haster */}
+          <div className="flex items-center gap-3">
+            <button
+              className={
+                'px-3 py-1.5 rounded-full border text-sm ' +
+                (rushOnly ? 'bg-red-600 text-white border-red-600' : 'bg-white hover:bg-gray-50')
+              }
+              onClick={() => setRushOnly((v) => !v)}
+              title="Oppdrag som starter innen 3 dager"
+            >
+              Haster (≤ 3 dager)
+            </button>
           </div>
         </section>
 
+        {/* Resultater */}
         <section className="space-y-3">
           <div className="text-sm text-gray-600">{filtered.length} treff</div>
           {filtered.map((a) => (
@@ -267,6 +354,7 @@ export default function Page() {
                   <span className="px-3 py-1.5 rounded-full bg-gray-100 text-sm">
                     {TYPES.find((t) => t.key === a.type)?.label}
                   </span>
+                  {/* Status-badge vises, men tolker får aldri se bemannede i lista uansett */}
                   <span className={
                     'px-3 py-1.5 rounded-full text-sm ' +
                     (a.status === 'staffed'
