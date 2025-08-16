@@ -153,6 +153,12 @@ function toggle(arr, value) {
 }
 
 export default function Page() {
+function logout() {
+  // slett rolle-cookien
+  document.cookie = "role=; Max-Age=0; path=/";
+  // last siden på nytt
+  window.location.reload();
+}
   const [q, setQ] = useState('');
   const [typeSel, setTypeSel] = useState([]);
   const [statusSel, setStatusSel] = useState(['inviting', 'partly_filled']); // default: bare ledige
