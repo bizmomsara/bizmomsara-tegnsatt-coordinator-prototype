@@ -380,3 +380,29 @@ function logout() {
     </div>
   );
 }
+// Les rolle fra cookie (settes i middleware etter innlogging)
+useEffect(() => {
+  const m = document.cookie.match(/(?:^| )role=([^;]+)/);
+  if (m && (m[1] === 'admin' || m[1] === 'tolk')) setRole(m[1]);
+}, []);
+useEffect(() => {
+  if (role !== 'tolk') return;
+  const TIMEOUT_MS = 15 * 60 * 1000;
+  let timer;
+
+  const reset = () => {
+    if (timer) clearTimeout(timer);
+    timer = setTimeout(() => {
+      logout();
+    }, TIMEOUT_MS);
+  };
+
+  const events = ['mousemove', 'keydown', 'click', 'touchstart', 'scroll'];
+  events.forEach(ev => window.addEventListener(ev, reset, { passive: true }));
+  reset();
+
+  return () => {
+    if (timer) clearTimeout(timer);
+    events.forEach(ev => window.removeEventListener(ev, reset));
+  };
+}, [role]);
