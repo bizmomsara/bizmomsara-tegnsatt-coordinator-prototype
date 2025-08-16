@@ -229,22 +229,22 @@ function logout() {
   return (
     <div className="min-h-screen bg-gray-50 p-6">
       <div className="max-w-5xl mx-auto space-y-6">
-        <header className="flex items-center justify-between">
-          <h1 className="text-2xl font-bold">Tegnsatt — ledige oppdrag</h1>
-          <div className="flex items-center gap-2">
-            {/* Vis rolleindikator for demo */}
-            <span className="text-xs text-gray-500">Rolle: {role}</span>
-            <button
-              className="px-3 py-2 rounded-xl border text-sm hover:bg-white"
-              onClick={() => {
-                setQ(''); setTypeSel([]); setStatusSel(['inviting','partly_filled']);
-                setFrom(''); setTo(''); setSortAsc(true); setRushOnly(false);
-              }}
-            >
-              Nullstill filtre
-            </button>
-          </div>
-        </header>
+        <header className="flex justify-between items-center mb-6">
+  <h1 className="text-2xl font-bold">
+    Tegnsatt ledige oppdrag
+  </h1>
+  <div className="flex items-center gap-4">
+    <span className="text-gray-600">
+      Rolle: {role}
+    </span>
+    <button
+      onClick={logout}
+      className="px-3 py-1 bg-red-500 text-white rounded hover:bg-red-600"
+    >
+      Logg ut
+    </button>
+  </div>
+</header>
 
         <section className="bg-white p-4 rounded-2xl shadow-sm space-y-4">
           <div className="grid gap-3 md:grid-cols-3">
