@@ -437,54 +437,55 @@ export default function Page() {
             const interestSent = interest[a.id] === 'sent';
             return (
               <article key={a.id} className="bg-white p-4 rounded-2xl shadow-sm border">
-                {/* Klikkbart toppfelt */}
-                <div
-                  role="button"
-                  tabIndex={0}
-                  onClick={() => toggleExpand(a.id)}
-                  onKeyDown={(e) => onKeyCard(e, a.id)}
-                  className="flex flex-col md:flex-row md:items-center md:justify-between gap-2 outline-none focus:ring-2 focus:ring-blue-300 rounded-xl cursor-pointer"
-                  aria-expanded={isOpen}
-                >
-                  <div>
-                    <h2 className="text-lg font-semibold">{a.title}</h2>
-                    <p className="text-sm text-gray-600">{a.client} • {a.location}</p>
-                    <p className="text-sm text-gray-600">{fmt(a.start)} – {fmt(a.end)}</p>
-                  </div>
-                  <div className="flex items-center gap-2">
-                    <span className="px-3 py-1.5 rounded-full bg-gray-100 text-sm">
-                      {TYPES.find((t) => t.key === a.type)?.label}
-                    </span>
-                    <span
-                      className={
-                        'px-3 py-1.5 rounded-full text-sm ' +
-                        (a.status === 'staffed'
-                          ? 'bg-green-100 text-green-800'
-                          : a.status === 'partly_filled'
-                          ? 'bg-yellow-100 text-yellow-800'
-                          : 'bg-blue-100 text-blue-800')
-                      }
-                    >
-                      {STATUS.find((s) => s.key === a.status)?.label}
-                    </span>
-                  </div>
-                </div>
+                {/* Klikkbart toppfelt – robust button */}
+<button
+  type="button"
+  onClick={() => toggleExpand(a.id)}
+  aria-expanded={isOpen}
+  aria-controls={`details-${a.id}`}
+  className="w-full text-left flex flex-col md:flex-row md:items-center md:justify-between gap-2 outline-none focus:ring-2 focus:ring-blue-300 rounded-xl cursor-pointer"
+>
+  <div>
+    <h2 className="text-lg font-semibold">{a.title}</h2>
+    <p className="text-sm text-gray-600">{a.client} • {a.location}</p>
+    <p className="text-sm text-gray-600">{fmt(a.start)} – {fmt(a.end)}</p>
+  </div>
+  <div className="flex items-center gap-2">
+    <span className="px-3 py-1.5 rounded-full bg-gray-100 text-sm">
+      {TYPES.find((t) => t.key === a.type)?.label}
+    </span>
+    <span
+      className={
+        'px-3 py-1.5 rounded-full text-sm ' +
+        (a.status === 'staffed'
+          ? 'bg-green-100 text-green-800'
+          : a.status === 'partly_filled'
+          ? 'bg-yellow-100 text-yellow-800'
+          : 'bg-blue-100 text-blue-800')
+      }
+    >
+      {STATUS.find((s) => s.key === a.status)?.label}
+    </span>
+  </div>
+</button>
 
                 {/* Detaljseksjon */}
-                {isOpen && (
-                  <div className="mt-4 border-t pt-4 grid gap-3 md:grid-cols-2">
-                    <div className="space-y-1">
-                      <div className="text-sm text-gray-500">Adresse</div>
-                      <div className="text-sm">{a.address || '—'}</div>
-                    </div>
-                    <div className="space-y-1">
-                      <div className="text-sm text-gray-500">Medtolk</div>
-                      <div className="text-sm">{a.coInterpreter || '—'}</div>
-                    </div>
-                    <div className="space-y-1 md:col-span-2">
-                      <div className="text-sm text-gray-500">Forespørsel / spesifikasjoner</div>
-                      <div className="text-sm">{a.requesterNotes || '—'}</div>
-                    </div>
+{isOpen && (
+  <div className="mt-4 border-t pt-4 grid gap-3 md:grid-cols-2">
+    <div className="space-y-1">
+      <div className="text-sm text-gray-500">Adresse</div>
+      <div className="text-sm">{a.address || '-'}</div>
+    </div>
+    <div className="space-y-1">
+      <div className="text-sm text-gray-500">Medtolk</div>
+      <div className="text-sm">{a.coInterpreter || '-'}</div>
+    </div>
+    <div className="space-y-1 md:col-span-2">
+      <div className="text-sm text-gray-500">Forespørsel / spesifikasjoner</div>
+      <div className="text-sm">{a.requesterNotes || '-'}</div>
+    </div>
+  </div>
+)}
 
                     {/* Handlinger */}
                     <div className="md:col-span-2 flex items-center gap-3 pt-2">
