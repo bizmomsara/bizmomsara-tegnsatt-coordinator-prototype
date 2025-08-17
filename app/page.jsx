@@ -22,47 +22,148 @@ function daysFromNow(n) {
   return d;
 }
 
+/* Dummy-data med ekstra felter for detaljer */
 const SEED = [
-  { id:'A1', title:'UiO – forelesning PED1100', client:'UiO', type:'skrivetolking',
-    status:'inviting', start:daysFromNow(1).toISOString(),
+  {
+    id:'A1',
+    title:'UiO – forelesning PED1100',
+    client:'UiO',
+    type:'skrivetolking',
+    status:'inviting',
+    start:daysFromNow(1).toISOString(),
     end:new Date(daysFromNow(1).getTime()+2*60*60*1000).toISOString(),
-    location:'Oslo', required_interpreters:2 },
-  { id:'A2', title:'NAV – veiledningsmøte', client:'NAV', type:'tegnspråk',
-    status:'partly_filled', start:daysFromNow(0).toISOString(),
+    location:'Oslo',
+    address:'Problemveien 7, 0315 Oslo',
+    coInterpreter:'(partner tildeles senere)',
+    requesterNotes:'PowerPoint fra foreleser, behov for projeksjon.',
+    required_interpreters:2,
+  },
+  {
+    id:'A2',
+    title:'NAV – veiledningsmøte',
+    client:'NAV',
+    type:'tegnspråk',
+    status:'partly_filled',
+    start:daysFromNow(0).toISOString(),
     end:new Date(daysFromNow(0).getTime()+90*60*1000).toISOString(),
-    location:'Drammen (remote mulig)', required_interpreters:2 },
-  { id:'A3', title:'Konferanse – parallel session B', client:'KUD', type:'tegn_som_støtte',
-    status:'inviting', start:daysFromNow(7).toISOString(),
+    location:'Drammen (remote mulig)',
+    address:'NAV Drammen, Grønland 60, 3045 Drammen (Teams backup)',
+    coInterpreter:'Satt: Kari N.',
+    requesterNotes:'Konfidensiell sak; møt 10 min før.',
+    required_interpreters:2,
+  },
+  {
+    id:'A3',
+    title:'Konferanse – parallel session B',
+    client:'KUD',
+    type:'tegn_som_støtte',
+    status:'inviting',
+    start:daysFromNow(7).toISOString(),
     end:new Date(daysFromNow(7).getTime()+3*60*60*1000).toISOString(),
-    location:'Oslo Kongressenter', required_interpreters:2 },
-  { id:'A4', title:'Hjemmebesøk – kommunikasjon døvblind', client:'Kommune', type:'døvblinde',
-    status:'staffed', start:daysFromNow(3).toISOString(),
+    location:'Oslo Kongressenter',
+    address:'Youngs gate 21, 0181 Oslo',
+    coInterpreter:'(partner tildeles senere)',
+    requesterNotes:'Større sal, mygg-mikrofon. Pause kl. 13:30.',
+    required_interpreters:2,
+  },
+  {
+    id:'A4',
+    title:'Hjemmebesøk – kommunikasjon døvblind',
+    client:'Kommune',
+    type:'døvblinde',
+    status:'staffed',
+    start:daysFromNow(3).toISOString(),
     end:new Date(daysFromNow(3).getTime()+2*60*60*1000).toISOString(),
-    location:'Bærum', required_interpreters:2 },
-  { id:'A5', title:'Seminar – panelsamtale', client:'OsloMet', type:'tegnspråk',
-    status:'inviting', start:daysFromNow(14).toISOString(),
+    location:'Bærum',
+    address:'Oppgis direkte ved tildeling',
+    coInterpreter:'Per A. (satt)',
+    requesterNotes:'Kjent bruker; behov for rolige omgivelser.',
+    required_interpreters:2,
+  },
+  {
+    id:'A5',
+    title:'Seminar – panelsamtale',
+    client:'OsloMet',
+    type:'tegnspråk',
+    status:'inviting',
+    start:daysFromNow(14).toISOString(),
     end:new Date(daysFromNow(14).getTime()+2*60*60*1000).toISOString(),
-    location:'Oslo', required_interpreters:2 },
-  { id:'A6', title:'Kurs – arbeidsliv og rettigheter', client:'LO', type:'skrivetolking',
-    status:'inviting', start:daysFromNow(2).toISOString(),
+    location:'Oslo',
+    address:'Pilestredet 46, 0167 Oslo',
+    coInterpreter:'(partner tildeles senere)',
+    requesterNotes:'Strømmes; kamerarigger på stedet.',
+    required_interpreters:2,
+  },
+  {
+    id:'A6',
+    title:'Kurs – arbeidsliv og rettigheter',
+    client:'LO',
+    type:'skrivetolking',
+    status:'inviting',
+    start:daysFromNow(2).toISOString(),
     end:new Date(daysFromNow(2).getTime()+2*60*60*1000).toISOString(),
-    location:'Oslo', required_interpreters:2 },
-  { id:'A7', title:'Foreldremøte – grunnskole', client:'Kommune', type:'tegnspråk',
-    status:'inviting', start:daysFromNow(5).toISOString(),
+    location:'Oslo',
+    address:'Youngstorget 1, 0181 Oslo',
+    coInterpreter:'(partner tildeles senere)',
+    requesterNotes:'Behov for storskjerm-projeksjon.',
+    required_interpreters:2,
+  },
+  {
+    id:'A7',
+    title:'Foreldremøte – grunnskole',
+    client:'Kommune',
+    type:'tegnspråk',
+    status:'inviting',
+    start:daysFromNow(5).toISOString(),
     end:new Date(daysFromNow(5).getTime()+90*60*1000).toISOString(),
-    location:'Kongsberg', required_interpreters:2 },
-  { id:'A8', title:'Legebesøk – spesialist', client:'Viken HF', type:'tegn_som_støtte',
-    status:'partly_filled', start:daysFromNow(1).toISOString(),
+    location:'Kongsberg',
+    address:'Skolegata 3, 3616 Kongsberg',
+    coInterpreter:'(partner tildeles senere)',
+    requesterNotes:'Skole ber om ID ved oppmøte.',
+    required_interpreters:2,
+  },
+  {
+    id:'A8',
+    title:'Legebesøk – spesialist',
+    client:'Viken HF',
+    type:'tegn_som_støtte',
+    status:'partly_filled',
+    start:daysFromNow(1).toISOString(),
     end:new Date(daysFromNow(1).getTime()+60*60*1000).toISOString(),
-    location:'Drammen', required_interpreters:2 },
-  { id:'A9', title:'Workshop – inkluderende formidling', client:'Kulturetaten', type:'skrivetolking',
-    status:'inviting', start:daysFromNow(10).toISOString(),
+    location:'Drammen',
+    address:'Drammen sykehus, Dronninggata 28',
+    coInterpreter:'Lise T. (satt)',
+    requesterNotes:'Parkering i P-hus nord.',
+    required_interpreters:2,
+  },
+  {
+    id:'A9',
+    title:'Workshop – inkluderende formidling',
+    client:'Kulturetaten',
+    type:'skrivetolking',
+    status:'inviting',
+    start:daysFromNow(10).toISOString(),
     end:new Date(daysFromNow(10).getTime()+2*60*60*1000).toISOString(),
-    location:'Oslo', required_interpreters:2 },
-  { id:'A10', title:'Universitet – labøvelse', client:'UiB', type:'tegnspråk',
-    status:'staffed', start:daysFromNow(4).toISOString(),
+    location:'Oslo',
+    address:'Trondheimsveien 2, 0560 Oslo',
+    coInterpreter:'(partner tildeles senere)',
+    requesterNotes:'Interaktivt opplegg; ståbord ok.',
+    required_interpreters:2,
+  },
+  {
+    id:'A10',
+    title:'Universitet – labøvelse',
+    client:'UiB',
+    type:'tegnspråk',
+    status:'staffed',
+    start:daysFromNow(4).toISOString(),
     end:new Date(daysFromNow(4).getTime()+3*60*60*1000).toISOString(),
-    location:'Bergen', required_interpreters:2 },
+    location:'Bergen',
+    address:'Allégaten 41, 5007 Bergen',
+    coInterpreter:'Jon R. (satt)',
+    requesterNotes:'Hansker/vern tilbys på stedet.',
+    required_interpreters:2,
+  },
 ];
 
 /* ====== Hjelpere ====== */
@@ -94,6 +195,8 @@ export default function Page() {
   const [sortAsc, setSortAsc] = useState(true);
   const [rushOnly, setRushOnly] = useState(false); // HASTER
   const [role, setRole] = useState('tolk'); // default
+  const [expanded, setExpanded] = useState({}); // id -> bool
+  const [interest, setInterest] = useState({});  // id -> 'sent' | undefined
 
   // Hent rolle fra cookie (settes av middleware.ts)
   useEffect(() => {
@@ -171,6 +274,23 @@ export default function Page() {
 
     return data;
   }, [q, typeSel, statusSel, from, to, sortAsc, rushOnly, role]);
+
+  // Toggle/keyboard for accordion
+  function toggleExpand(id) {
+    setExpanded((prev) => ({ ...prev, [id]: !prev[id] }));
+  }
+  function onKeyCard(e, id) {
+    if (e.key === 'Enter' || e.key === ' ') {
+      e.preventDefault();
+      toggleExpand(id);
+    }
+  }
+
+  // “Ønsker oppdraget”
+  function sendInterest(id) {
+    setInterest((prev) => ({ ...prev, [id]: 'sent' }));
+    // her ville vi i ekte løsning kalt backend: POST /assignments/{id}/interest
+  }
 
   return (
     <div className="min-h-screen bg-gray-50 p-6">
@@ -312,34 +432,90 @@ export default function Page() {
         {/* Resultater */}
         <section className="space-y-3">
           <div className="text-sm text-gray-600">{filtered.length} treff</div>
-          {filtered.map((a) => (
-            <article key={a.id} className="bg-white p-4 rounded-2xl shadow-sm border">
-              <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-2">
-                <div>
-                  <h2 className="text-lg font-semibold">{a.title}</h2>
-                  <p className="text-sm text-gray-600">{a.client} • {a.location}</p>
-                  <p className="text-sm text-gray-600">{fmt(a.start)} – {fmt(a.end)}</p>
+          {filtered.map((a) => {
+            const isOpen = !!expanded[a.id];
+            const interestSent = interest[a.id] === 'sent';
+            return (
+              <article key={a.id} className="bg-white p-4 rounded-2xl shadow-sm border">
+                {/* Klikkbart toppfelt */}
+                <div
+                  role="button"
+                  tabIndex={0}
+                  onClick={() => toggleExpand(a.id)}
+                  onKeyDown={(e) => onKeyCard(e, a.id)}
+                  className="flex flex-col md:flex-row md:items-center md:justify-between gap-2 outline-none focus:ring-2 focus:ring-blue-300 rounded-xl cursor-pointer"
+                  aria-expanded={isOpen}
+                >
+                  <div>
+                    <h2 className="text-lg font-semibold">{a.title}</h2>
+                    <p className="text-sm text-gray-600">{a.client} • {a.location}</p>
+                    <p className="text-sm text-gray-600">{fmt(a.start)} – {fmt(a.end)}</p>
+                  </div>
+                  <div className="flex items-center gap-2">
+                    <span className="px-3 py-1.5 rounded-full bg-gray-100 text-sm">
+                      {TYPES.find((t) => t.key === a.type)?.label}
+                    </span>
+                    <span
+                      className={
+                        'px-3 py-1.5 rounded-full text-sm ' +
+                        (a.status === 'staffed'
+                          ? 'bg-green-100 text-green-800'
+                          : a.status === 'partly_filled'
+                          ? 'bg-yellow-100 text-yellow-800'
+                          : 'bg-blue-100 text-blue-800')
+                      }
+                    >
+                      {STATUS.find((s) => s.key === a.status)?.label}
+                    </span>
+                  </div>
                 </div>
-                <div className="flex items-center gap-2">
-                  <span className="px-3 py-1.5 rounded-full bg-gray-100 text-sm">
-                    {TYPES.find((t) => t.key === a.type)?.label}
-                  </span>
-                  <span
-                    className={
-                      'px-3 py-1.5 rounded-full text-sm ' +
-                      (a.status === 'staffed'
-                        ? 'bg-green-100 text-green-800'
-                        : a.status === 'partly_filled'
-                        ? 'bg-yellow-100 text-yellow-800'
-                        : 'bg-blue-100 text-blue-800')
-                    }
-                  >
-                    {STATUS.find((s) => s.key === a.status)?.label}
-                  </span>
-                </div>
-              </div>
-            </article>
-          ))}
+
+                {/* Detaljseksjon */}
+                {isOpen && (
+                  <div className="mt-4 border-t pt-4 grid gap-3 md:grid-cols-2">
+                    <div className="space-y-1">
+                      <div className="text-sm text-gray-500">Adresse</div>
+                      <div className="text-sm">{a.address || '—'}</div>
+                    </div>
+                    <div className="space-y-1">
+                      <div className="text-sm text-gray-500">Medtolk</div>
+                      <div className="text-sm">{a.coInterpreter || '—'}</div>
+                    </div>
+                    <div className="space-y-1 md:col-span-2">
+                      <div className="text-sm text-gray-500">Forespørsel / spesifikasjoner</div>
+                      <div className="text-sm">{a.requesterNotes || '—'}</div>
+                    </div>
+
+                    {/* Handlinger */}
+                    <div className="md:col-span-2 flex items-center gap-3 pt-2">
+                      {role === 'tolk' && (
+                        interestSent ? (
+                          <span className="px-3 py-1.5 rounded-full bg-green-600 text-white text-sm">
+                            Interesse sendt
+                          </span>
+                        ) : (
+                          <button
+                            className="px-4 py-2 rounded-xl border text-sm hover:bg-gray-50"
+                            onClick={() => sendInterest(a.id)}
+                          >
+                            Ønsker oppdraget
+                          </button>
+                        )
+                      )}
+                      {role === 'admin' && (
+                        <button
+                          className="px-4 py-2 rounded-xl border text-sm hover:bg-gray-50"
+                          onClick={() => alert('(Demo) Admin-handling her — f.eks. Tildel / Inviter')}
+                        >
+                          Admin: handling
+                        </button>
+                      )}
+                    </div>
+                  </div>
+                )}
+              </article>
+            );
+          })}
         </section>
       </div>
     </div>
