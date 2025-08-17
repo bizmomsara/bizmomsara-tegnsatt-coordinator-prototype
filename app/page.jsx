@@ -469,23 +469,56 @@ export default function Page() {
   </div>
 </button>
 
-                {/* Detaljseksjon */}
-{isOpen && (
-  <div className="mt-4 border-t pt-4 grid gap-3 md:grid-cols-2">
+{/* Detaljseksjon */}
+{expanded[a.id] && (
+  <div
+    id={`details-${a.id}`}
+    className="mt-4 border-t pt-4 grid gap-3 md:grid-cols-2"
+  >
     <div className="space-y-1">
       <div className="text-sm text-gray-500">Adresse</div>
-      <div className="text-sm">{a.address || '-'}</div>
+      <div className="text-sm">{a.address || '—'}</div>
     </div>
+
     <div className="space-y-1">
       <div className="text-sm text-gray-500">Medtolk</div>
-      <div className="text-sm">{a.coInterpreter || '-'}</div>
+      <div className="text-sm">{a.coInterpreter || '—'}</div>
     </div>
+
     <div className="space-y-1 md:col-span-2">
       <div className="text-sm text-gray-500">Forespørsel / spesifikasjoner</div>
-      <div className="text-sm">{a.requesterNotes || '-'}</div>
+      <div className="text-sm">{a.requesterNotes || '—'}</div>
+    </div>
+
+    {/* Handlinger */}
+    <div className="md:col-span-2 flex items-center gap-3 pt-2">
+      {role === 'tolk' && (
+        interest[a.id] === 'sent' ? (
+          <span className="px-3 py-1.5 rounded-full bg-green-600 text-white text-sm">
+            Interesse sendt
+          </span>
+        ) : (
+          <button
+            className="px-4 py-2 rounded-xl border text-sm hover:bg-gray-50"
+            onClick={() => sendInterest(a.id)}
+          >
+            Ønsker oppdraget
+          </button>
+        )
+      )}
+
+      {role === 'admin' && (
+        <button
+          className="px-4 py-2 rounded-xl border text-sm hover:bg-gray-50"
+          onClick={() => alert('(Demo) Admin-handling her — f.eks. Tildel / Inviter')}
+        >
+          Admin: handling
+        </button>
+      )}
     </div>
   </div>
 )}
+
 
                     {/* Handlinger */}
                     <div className="md:col-span-2 flex items-center gap-3 pt-2">
