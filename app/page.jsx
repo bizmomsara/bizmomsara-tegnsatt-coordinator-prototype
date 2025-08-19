@@ -1,9 +1,8 @@
 'use client';
 import { useMemo, useState } from 'react';
 
-// RELATIVE IMPORTS (trygg standard)
-import { getJobs } from '../lib/getJobs';
-import { INITIAL } from '../lib/seed';
+import { getJobs } from '@/lib/getJobs';
+import { INITIAL } from '@/lib/seed';
 
 const TYPES = ['tegnspråk', 'skrivetolking'];
 const VIEWS = [
