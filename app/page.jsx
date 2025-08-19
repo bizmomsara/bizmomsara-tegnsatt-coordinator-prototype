@@ -12,7 +12,7 @@ const SEED = [
     address: 'Storgata 12, 3611 Kongsberg',
     coInterpreter: 'Ola Nordmann',
     requesterNotes: 'Viktig: møte varer i 3 timer, behov for pauser underveis.',
-    assigned: false, // ← ikke tildelt (tolk skal ikke se medtolk)
+    assigned: false, // ikke tildelt
   },
   {
     id: 2,
@@ -24,20 +24,20 @@ const SEED = [
     address: 'Blindern Campus, Auditorium 3',
     coInterpreter: 'Kari Tolkerud',
     requesterNotes: 'Behov for tolk som kan håndtere fagsjargong.',
-    assigned: true, // ← tildelt (tolk kan se medtolk)
+    assigned: true, // tildelt
   },
 ];
 
 const TYPES = ['tegnspråk', 'skrivetolking'];
 
 export default function Page() {
-  // Demo: rolle-velger for å verifisere logikken (i virkelig løsning kommer rolle fra auth/session)
-  const [role, setRole] = useState<'tolk' | 'admin'>('tolk');
-  const [openId, setOpenId] = useState<number | null>(null);
+  // NB: ingen TypeScript her – bare strenger
+  const [role, setRole] = useState('tolk'); // 'tolk' | 'admin'
+  const [openId, setOpenId] = useState(null);
   const [query, setQuery] = useState('');
-  const [typeFilter, setTypeFilter] = useState<'alle' | 'tegnspråk' | 'skrivetolking'>('alle');
+  const [typeFilter, setTypeFilter] = useState('alle');
 
-  const chipClass = (value: string) =>
+  const chipClass = (value) =>
     `text-sm px-3 py-1 rounded-full border transition ${
       typeFilter === value ? 'bg-black text-white border-black' : 'bg-white'
     }`;
@@ -56,7 +56,7 @@ export default function Page() {
       <div className="mb-3 flex items-center justify-between gap-3">
         <h1 className="text-2xl font-semibold">Tegnsatt — ledige oppdrag</h1>
 
-        {/* Rolle-velger for demo */}
+        {/* Rolle-velger (demo) */}
         <div className="flex items-center gap-2 text-sm">
           <span>Rolle:</span>
           <button
@@ -90,7 +90,7 @@ export default function Page() {
           alle
         </button>
         {TYPES.map((t) => (
-          <button key={t} type="button" onClick={() => setTypeFilter(t as any)} className={chipClass(t)}>
+          <button key={t} type="button" onClick={() => setTypeFilter(t)} className={chipClass(t)}>
             {t}
           </button>
         ))}
@@ -103,7 +103,6 @@ export default function Page() {
         <ul className="space-y-3">
           {list.map((a) => {
             const canSeeCoInterpreter = role === 'admin' || a.assigned;
-
             return (
               <li key={a.id} className="border rounded-xl bg-white">
                 <button
@@ -129,7 +128,7 @@ export default function Page() {
                       <div className="text-sm">{a.address}</div>
                     </div>
 
-                    {/* Medtolk: skjules for tolk inntil oppdraget er tildelt */}
+                    {/* Medtolk: skjules for tolk inntil tildelt */}
                     <div>
                       <div className="text-sm font-medium">Medtolk</div>
                       <div className="text-sm">
