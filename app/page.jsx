@@ -10,6 +10,11 @@ const VIEWS = [
   { id: 'mine-ønsker', label: 'Mine ønsker' },
   { id: 'mine-tildelte', label: 'Mine tildelte' },
 ];
+const STATUS = {
+  inviting: { label: 'Åpne', className: 'bg-blue-50 text-blue-700 border-blue-200' },
+  partly_filled: { label: 'Delvis bemannet', className: 'bg-yellow-50 text-yellow-800 border-yellow-200' },
+  filled: { label: 'Bemannet', className: 'bg-green-50 text-green-800 border-green-200' },
+};
 
 export default function Page() {
   const [role, setRole] = useState('tolk'); // 'tolk' | 'admin'
@@ -18,6 +23,7 @@ export default function Page() {
   const [openId, setOpenId] = useState(null);
   const [query, setQuery] = useState('');
   const [typeFilter, setTypeFilter] = useState('alle');
+  const [sortBy, setSortBy] = useState('date_asc'); // 'date_asc' | 'date_desc'
 
   const chipClass = (value) =>
     `text-sm px-3 py-1 rounded-full border transition ${
@@ -33,6 +39,13 @@ export default function Page() {
   const filtered = useMemo(() => {
     return getJobs({ allJobs: jobs, view, typeFilter, query, role });
   }, [jobs, view, typeFilter, query, role]);
+const displayed = useMemo(() => {
+  const arr = [...filtered];                  // lag en kopi av filtered
+  arr.sort((a, b) => new Date(a.date) - new Date(b.date)); // sorter stigende på dato
+  if (sortBy === 'date_desc') arr.reverse();  // hvis valgt "Dato ↓", snu rekkefølgen
+  return arr;                                 // dette er lista vi viser
+}, [filtered, sortBy]);
+<div className="mb-2 text-sm opacity-70">{displayed.length} treff</div>
 
   // handlinger
   const toggleOpen = (id) => setOpenId(openId === id ? null : id);
@@ -103,18 +116,31 @@ export default function Page() {
         placeholder="Søk (tittel, kunde, sted)"
         className="w-full mb-3 border rounded-lg p-2"
       />
-      <div className="flex gap-2 mb-4">
-        <button className={chipClass('alle')} onClick={() => setTypeFilter('alle')}>alle</button>
-        {TYPES.map((t) => (
-          <button key={t} className={chipClass(t)} onClick={() => setTypeFilter(t)}>{t}</button>
-        ))}
-      </div>
+     <div className="flex flex-wrap items-center gap-2 mb-4">
+  <button className={chipClass('alle')} onClick={() => setTypeFilter('alle')}>alle</button>
+  {TYPES.map((t) => (
+    <button key={t} className={chipClass(t)} onClick={() => setTypeFilter(t)}>{t}</button>
+  ))}
 
-      {filtered.length === 0 ? (
+  <div className="ml-auto flex items-center gap-2">
+    <label className="text-sm opacity-70">Sorter:</label>
+    <select
+      value={sortBy}
+      onChange={(e) => setSortBy(e.target.value)}
+      className="border rounded-lg px-2 py-1 text-sm bg-white"
+    >
+      <option value="date_asc">Dato ↑</option>
+      <option value="date_desc">Dato ↓</option>
+    </select>
+  </div>
+</div>
+
+
+      {displayed.length === 0 ? (
         <div className="opacity-70">Ingen treff.</div>
       ) : (
         <ul className="space-y-3">
-          {filtered.map((a) => (
+          {displayed.map((a) => (
             <li key={a.id} className="border rounded-xl bg-white">
               <button
                 type="button"
