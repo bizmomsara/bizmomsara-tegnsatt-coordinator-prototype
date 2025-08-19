@@ -510,4 +510,7 @@ export default function Page() {
     </article>
   ))}
 </section>
-        
+              </div>        {/* slutt på .max-w-5xl wrapper */}
+    </div>          {/* slutt på .min-h-screen wrapper */}
+  );
+}
