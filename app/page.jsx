@@ -1,3 +1,6 @@
+import { getJobs } from '../lib/getJobs';
+import { INITIAL } from '../lib/seed';
+
 'use client';
 import { useMemo, useState } from 'react';
 
