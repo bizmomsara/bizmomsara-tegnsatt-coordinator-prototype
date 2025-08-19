@@ -134,6 +134,7 @@ const displayed = useMemo(() => {
     </select>
   </div>
 </div>
+<div className="mb-2 text-sm opacity-70">{displayed.length} treff</div>
 
 
       {displayed.length === 0 ? (
@@ -154,7 +155,14 @@ const displayed = useMemo(() => {
                       {a.customer} — {a.date}
                     </div>
                   </div>
-                  <span className="text-sm px-2 py-1 rounded-full border">{a.type}</span>
+                  <div className="flex items-center gap-2">
+  <span className="text-sm px-2 py-1 rounded-full border">{a.type}</span>
+  {STATUS[a.status] && (
+    <span className={`text-sm px-2 py-1 rounded-full border ${STATUS[a.status].className}`}>
+      {STATUS[a.status].label}
+    </span>
+  )}
+</div>
                 </div>
               </button>
 
