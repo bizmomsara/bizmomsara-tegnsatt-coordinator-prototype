@@ -418,116 +418,96 @@ export default function Page() {
           </div>
         </section>
 
-        {/* Resultater */}
-        <section className="space-y-3">
-          <div className="text-sm text-gray-600">{filtered.length} treff</div>
+{/* Resultater – bruker native <details> for klikk uten JS */}
+<section className="space-y-3">
+  <div className="text-sm text-gray-600">{filtered.length} treff</div>
 
-          {filtered.map((a) => {
-            const isOpen = !!expanded[a.id];
+  {filtered.map((a) => (
+    <article key={a.id} className="bg-white p-4 rounded-2xl shadow-sm border relative z-0">
+      <details className="group">
+        <summary
+          className="list-none w-full text-left flex flex-col md:flex-row md:items-center md:justify-between gap-2 cursor-pointer
+                     outline-none focus:ring-2 focus:ring-blue-300 rounded-xl"
+        >
+          <div>
+            <h2 className="text-lg font-semibold">{a.title}</h2>
+            <p className="text-sm text-gray-600">{a.client} • {a.location}</p>
+            <p className="text-sm text-gray-600">{fmt(a.start)} – {fmt(a.end)}</p>
+          </div>
 
-            return (
-              <article key={a.id} className="bg-white p-4 rounded-2xl shadow-sm border">
-                {/* Klikkbart toppfelt – ekte button */}
+          <div className="flex items-center gap-2">
+            <span className="px-3 py-1.5 rounded-full bg-gray-100 text-sm">
+              {TYPES.find((t) => t.key === a.type)?.label}
+            </span>
+            <span
+              className={
+                'px-3 py-1.5 rounded-full text-sm ' +
+                (a.status === 'staffed'
+                  ? 'bg-green-100 text-green-800'
+                  : a.status === 'partly_filled'
+                  ? 'bg-yellow-100 text-yellow-800'
+                  : 'bg-blue-100 text-blue-800')
+              }
+            >
+              {STATUS.find((s) => s.key === a.status)?.label}
+            </span>
+            {/* Chevron som roterer med CSS, uten JS */}
+            <span
+              className="ml-1 inline-block transition-transform duration-200 group-open:rotate-180"
+              aria-hidden="true"
+              title="Vis/skjul detaljer"
+            >
+              ▾
+            </span>
+          </div>
+        </summary>
+
+        {/* Detaljseksjon */}
+        <div className="mt-4 border-t pt-4 grid gap-3 md:grid-cols-2">
+          <div className="space-y-1">
+            <div className="text-sm text-gray-500">Adresse</div>
+            <div className="text-sm">{a.address || '—'}</div>
+          </div>
+
+          <div className="space-y-1">
+            <div className="text-sm text-gray-500">Medtolk</div>
+            <div className="text-sm">{a.coInterpreter || '—'}</div>
+          </div>
+
+          <div className="space-y-1 md:col-span-2">
+            <div className="text-sm text-gray-500">Forespørsel / spesifikasjoner</div>
+            <div className="text-sm">{a.requesterNotes || '—'}</div>
+          </div>
+
+          {/* Handlinger */}
+          <div className="md:col-span-2 flex items-center gap-3 pt-2">
+            {role === 'tolk' && (
+              interest[a.id] === 'sent' ? (
+                <span className="px-3 py-1.5 rounded-full bg-green-600 text-white text-sm">
+                  Interesse sendt
+                </span>
+              ) : (
                 <button
-                  type="button"
-                  onClick={() => setExpanded((p) => ({ ...p, [a.id]: !p[a.id] }))}
-                  aria-expanded={isOpen}
-                  aria-controls={`details-${a.id}`}
-                  className="w-full text-left flex flex-col md:flex-row md:items-center md:justify-between gap-2 outline-none focus:ring-2 focus:ring-blue-300 rounded-xl cursor-pointer"
+                  className="px-4 py-2 rounded-xl border text-sm hover:bg-gray-50"
+                  onClick={() => setInterest((prev) => ({ ...prev, [a.id]: 'sent' }))}
                 >
-                  <div>
-                    <h2 className="text-lg font-semibold">{a.title}</h2>
-                    <p className="text-sm text-gray-600">{a.client} • {a.location}</p>
-                    <p className="text-sm text-gray-600">{fmt(a.start)} – {fmt(a.end)}</p>
-                  </div>
-
-                  <div className="flex items-center gap-2">
-                    <span className="px-3 py-1.5 rounded-full bg-gray-100 text-sm">
-                      {TYPES.find((t) => t.key === a.type)?.label}
-                    </span>
-                    <span
-                      className={
-                        'px-3 py-1.5 rounded-full text-sm ' +
-                        (a.status === 'staffed'
-                          ? 'bg-green-100 text-green-800'
-                          : a.status === 'partly_filled'
-                          ? 'bg-yellow-100 text-yellow-800'
-                          : 'bg-blue-100 text-blue-800')
-                      }
-                    >
-                      {STATUS.find((s) => s.key === a.status)?.label}
-                    </span>
-
-                    {/* Chevron som viser åpen/lukket */}
-                    <span
-                      className={
-                        'ml-1 inline-block transition-transform duration-200 ' +
-                        (isOpen ? 'rotate-180' : 'rotate-0')
-                      }
-                      aria-hidden="true"
-                      title={isOpen ? 'Skjul detaljer' : 'Vis detaljer'}
-                    >
-                      ▾
-                    </span>
-                  </div>
+                  Ønsker oppdraget
                 </button>
+              )
+            )}
 
-                {/* Detaljseksjon */}
-                {isOpen && (
-                  <div
-                    id={`details-${a.id}`}
-                    className="mt-4 border-t pt-4 grid gap-3 md:grid-cols-2"
-                  >
-                    <div className="space-y-1">
-                      <div className="text-sm text-gray-500">Adresse</div>
-                      <div className="text-sm">{a.address || '—'}</div>
-                    </div>
-
-                    <div className="space-y-1">
-                      <div className="text-sm text-gray-500">Medtolk</div>
-                      <div className="text-sm">{a.coInterpreter || '—'}</div>
-                    </div>
-
-                    <div className="space-y-1 md:col-span-2">
-                      <div className="text-sm text-gray-500">Forespørsel / spesifikasjoner</div>
-                      <div className="text-sm">{a.requesterNotes || '—'}</div>
-                    </div>
-
-                    {/* Handlinger */}
-                    <div className="md:col-span-2 flex items-center gap-3 pt-2">
-                      {role === 'tolk' && (
-                        interest[a.id] === 'sent' ? (
-                          <span className="px-3 py-1.5 rounded-full bg-green-600 text-white text-sm">
-                            Interesse sendt
-                          </span>
-                        ) : (
-                          <button
-                            className="px-4 py-2 rounded-xl border text-sm hover:bg-gray-50"
-                            onClick={() =>
-                              setInterest((prev) => ({ ...prev, [a.id]: 'sent' }))
-                            }
-                          >
-                            Ønsker oppdraget
-                          </button>
-                        )
-                      )}
-
-                      {role === 'admin' && (
-                        <button
-                          className="px-4 py-2 rounded-xl border text-sm hover:bg-gray-50"
-                          onClick={() => alert('(Demo) Admin-handling her — f.eks. Tildel / Inviter')}
-                        >
-                          Admin: handling
-                        </button>
-                      )}
-                    </div>
-                  </div>
-                )}
-              </article>
-            );
-          })}
-        </section>
-      </div>
-    </div>
-  );
-}
+            {role === 'admin' && (
+              <button
+                className="px-4 py-2 rounded-xl border text-sm hover:bg-gray-50"
+                onClick={() => alert('(Demo) Admin-handling her — f.eks. Tildel / Inviter')}
+              >
+                Admin: handling
+              </button>
+            )}
+          </div>
+        </div>
+      </details>
+    </article>
+  ))}
+</section>
+        
