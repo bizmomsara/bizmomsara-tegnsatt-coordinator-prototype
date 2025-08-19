@@ -60,20 +60,21 @@ const displayed = useMemo(() => {
       prev.map((a) => (a.id === id ? { ...a, appliedByUser: false } : a))
     );
 
-  // Admin: tildel til bruker (demo)
-  const assignToUser = (id) =>
-    setJobs((prev) =>
-      prev.map((a) =>
-        a.id === id
-          ? {
-              ...a,
-              assigned: true,        // oppdraget er tatt
-              assignedToUser: true,  // tildelt denne brukeren
-              appliedByUser: false,  // rydd opp i ønsker
-            }
-          : a
-      )
-    );
+// Admin: tildel til bruker (demo) – øk assignedCount til maks slots
+const assignToUser = (id) =>
+  setJobs((prev) =>
+    prev.map((a) => {
+      if (a.id !== id) return a;
+      const nextCount = Math.min(a.assignedCount + 1, a.slots);
+      return {
+        ...a,
+        assignedCount: nextCount, // oppdater antall tildelte
+        assignedToUser: true,     // i demoen: tildelt “meg”
+        appliedByUser: false,     // rydd bort eventuelt ønske
+      };
+    })
+  );
+
 
   return (
     <main className="max-w-3xl mx-auto p-4">
