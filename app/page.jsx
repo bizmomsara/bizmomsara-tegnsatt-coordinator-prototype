@@ -139,31 +139,16 @@ const assignToUser = (id) =>
     Nullstill filtre
   </button>
 
-  <div className="ml-auto flex items-center gap-2">
-    <label className="text-sm opacity-70">Sorter:</label>
-    <select
-      value={sortBy}
-      onChange={(e) => setSortBy(e.target.value)}
-      className="border rounded-lg px-2 py-1 text-sm bg-white"
-    >
-      <option value="date_asc">Dato ↑</option>
-      <option value="date_desc">Dato ↓</option>
-    </select>
-  </div>
-</div>
-
-
-  <div className="ml-auto flex items-center gap-2">
-    <label className="text-sm opacity-70">Sorter:</label>
-    <select
-      value={sortBy}
-      onChange={(e) => setSortBy(e.target.value)}
-      className="border rounded-lg px-2 py-1 text-sm bg-white"
-    >
-      <option value="date_asc">Dato ↑</option>
-      <option value="date_desc">Dato ↓</option>
-    </select>
-  </div>
+<div className="ml-auto flex items-center gap-2">
+  <label className="text-sm opacity-70">Sorter:</label>
+  <select
+    value={sortBy}
+    onChange={(e) => setSortBy(e.target.value)}
+    className="border rounded-lg px-2 py-1 text-sm bg-white"
+  >
+    <option value="date_asc">Dato ↑</option>
+    <option value="date_desc">Dato ↓</option>
+  </select>
 </div>
 <div className="mb-2 text-sm opacity-70">{displayed.length} treff</div>
 
