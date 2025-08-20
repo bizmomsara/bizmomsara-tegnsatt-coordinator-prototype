@@ -124,11 +124,7 @@ const assignToUser = (id) =>
         placeholder="Søk (tittel, kunde, sted)"
         className="w-full mb-3 border rounded-lg p-2"
       />
-     <div className="flex flex-wrap items-center gap-2 mb-4">
-  <button className={chipClass('alle')} onClick={() => setTypeFilter('alle')}>alle</button>
-  {TYPES.map((t) => (
-    <button key={t} className={chipClass(t)} onClick={() => setTypeFilter(t)}>{t}</button>
-  ))}
+    {/* Filterlinje */}
 <div className="flex flex-wrap items-center gap-2 mb-4">
   <button className={chipClass('alle')} onClick={() => setTypeFilter('alle')}>alle</button>
   {TYPES.map((t) => (
@@ -155,6 +151,7 @@ const assignToUser = (id) =>
     </select>
   </div>
 </div>
+
 
   <div className="ml-auto flex items-center gap-2">
     <label className="text-sm opacity-70">Sorter:</label>
