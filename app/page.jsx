@@ -24,6 +24,13 @@ export default function Page() {
   const [query, setQuery] = useState('');
   const [typeFilter, setTypeFilter] = useState('alle');
   const [sortBy, setSortBy] = useState('date_asc'); // 'date_asc' | 'date_desc'
+  const resetFilters = () => {
+  setQuery('');
+  setTypeFilter('alle');
+  setSortBy('date_asc');
+  setView('ledige');
+  setOpenId(null);
+};
 
   const chipClass = (value) =>
     `text-sm px-3 py-1 rounded-full border transition ${
