@@ -129,6 +129,32 @@ const assignToUser = (id) =>
   {TYPES.map((t) => (
     <button key={t} className={chipClass(t)} onClick={() => setTypeFilter(t)}>{t}</button>
   ))}
+<div className="flex flex-wrap items-center gap-2 mb-4">
+  <button className={chipClass('alle')} onClick={() => setTypeFilter('alle')}>alle</button>
+  {TYPES.map((t) => (
+    <button key={t} className={chipClass(t)} onClick={() => setTypeFilter(t)}>{t}</button>
+  ))}
+
+  <button
+    type="button"
+    onClick={resetFilters}
+    className="px-3 py-1 rounded border"
+  >
+    Nullstill filtre
+  </button>
+
+  <div className="ml-auto flex items-center gap-2">
+    <label className="text-sm opacity-70">Sorter:</label>
+    <select
+      value={sortBy}
+      onChange={(e) => setSortBy(e.target.value)}
+      className="border rounded-lg px-2 py-1 text-sm bg-white"
+    >
+      <option value="date_asc">Dato ↑</option>
+      <option value="date_desc">Dato ↓</option>
+    </select>
+  </div>
+</div>
 
   <div className="ml-auto flex items-center gap-2">
     <label className="text-sm opacity-70">Sorter:</label>
