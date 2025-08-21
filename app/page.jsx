@@ -287,6 +287,12 @@ const formatDate = (iso) => {
   );
 })()}
 
+  {role === 'admin' && typeof a.appliedCount === 'number' && a.appliedCount > 0 && (
+  <span className="text-sm px-2 py-1 rounded-full border bg-blue-50 text-blue-700 border-blue-200">
+    {a.appliedCount} påmeldt{a.appliedCount === 1 ? '' : 'e'}
+  </span>
+)}
+
   {STATUS[a.status] && (
     <span
       className={`text-sm px-2 py-1 rounded-full border ${STATUS[a.status].className}`}
