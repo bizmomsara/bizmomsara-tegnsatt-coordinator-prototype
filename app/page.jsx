@@ -35,6 +35,7 @@ export default function Page() {
   const [sortBy, setSortBy] = useState('date_asc'); // 'date_asc' | 'date_desc'
   const [from, setFrom] = useState(''); // YYYY-MM-DD
 const [to, setTo] = useState('');     // YYYY-MM-DD
+const views = role === 'admin' ? ADMIN_VIEWS : VIEWS;
 
 
   const chipClass = (value) =>
