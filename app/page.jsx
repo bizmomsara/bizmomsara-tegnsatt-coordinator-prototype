@@ -1,5 +1,5 @@
 'use client';
-import { useMemo, useState } from 'react';
+import { useMemo, useState, useEffect } from 'react';
 import { getJobs } from '@/lib/getJobs';
 import { INITIAL } from '@/lib/seed';
 
