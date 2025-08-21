@@ -233,26 +233,26 @@ const unassignFromUser = (id) => {
                         Trekk ønske
                       </button>
                     )}
-                    {role === 'admin' && (
+{role === 'admin' && (
   <>
-    <button className="px-3 py-1 rounded border" onClick={() => assignToUser(a.id)}>
+    {/* ← BYTT denne knappen ut med varianten under */}
+    <button
+      className={`px-3 py-1 rounded border ${
+        a.assignedCount >= a.slots ? 'opacity-50 cursor-not-allowed' : ''
+      }`}
+      onClick={() => assignToUser(a.id)}
+      disabled={a.assignedCount >= a.slots}
+    >
       Tildel til bruker (demo)
     </button>
+
     {a.assignedCount > 0 && (
-      <button className="px-3 py-1 rounded border" onClick={() => unassignFromUser(a.id)}>
+      <button
+        className="px-3 py-1 rounded border"
+        onClick={() => unassignFromUser(a.id)}
+      >
         Fjern tildeling (demo)
       </button>
     )}
   </>
 )}
-
-                  </div>
-                </div>
-              )}
-            </li>
-          ))}
-        </ul>
-      )}
-    </main>
-  );
-}
