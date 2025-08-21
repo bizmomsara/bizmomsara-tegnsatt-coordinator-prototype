@@ -11,6 +11,12 @@ const VIEWS = [
   { id: 'mine-tildelte', label: 'Mine tildelte' },
 ];
 
+const ADMIN_VIEWS = [
+  { id: 'ledige', label: 'Ledige' },
+  { id: 'mine-ønsker', label: 'Påmeldte' },
+  { id: 'mine-tildelte', label: 'Tildelte' },
+];
+
 const STATUS = {
   inviting:      { label: 'Åpne',            className: 'bg-blue-50 text-blue-700 border-blue-200' },
   partly_filled: { label: 'Delvis bemannet', className: 'bg-yellow-50 text-yellow-800 border-yellow-200' },
