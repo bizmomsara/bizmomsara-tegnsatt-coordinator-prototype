@@ -109,10 +109,24 @@ useEffect(() => {
   const toggleOpen = (id) => setOpenId(openId === id ? null : id);
 
   const applyFor = (id) =>
-    setJobs((prev) => prev.map((a) => (a.id === id ? { ...a, appliedByUser: true } : a)));
+  setJobs((prev) =>
+    prev.map((a) => {
+      if (a.id !== id) return a;
+      if (a.appliedByUser) return a; // allerede meldt
+      const nextApplied = (typeof a.appliedCount === 'number' ? a.appliedCount : 0) + 1;
+      return { ...a, appliedByUser: true, appliedCount: nextApplied };
+    })
+  );
 
   const withdraw = (id) =>
-    setJobs((prev) => prev.map((a) => (a.id === id ? { ...a, appliedByUser: false } : a)));
+  setJobs((prev) =>
+    prev.map((a) => {
+      if (a.id !== id) return a;
+      if (!a.appliedByUser) return a; // ikke meldt
+      const curr = typeof a.appliedCount === 'number' ? a.appliedCount : 1;
+      return { ...a, appliedByUser: false, appliedCount: Math.max(0, curr - 1) };
+    })
+  );
 
 // Admin: tildel til bruker (demo) – øk assignedCount til maks slots
 const assignToUser = (id) => {
