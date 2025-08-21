@@ -38,12 +38,14 @@ const [to, setTo] = useState('');     // YYYY-MM-DD
     }`;
 
   const resetFilters = () => {
-    setQuery('');
-    setTypeFilter('alle');
-    setSortBy('date_asc');
-    setView('ledige');
-    setOpenId(null);
-  };
+  setQuery('');
+  setTypeFilter('alle');
+  setSortBy('date_asc');
+  setView('ledige');
+  setOpenId(null);
+  setFrom('');   // NY
+  setTo('');     // NY
+};
 
   // GDPR- og visningsfiltrering (fra datalaget)
   const filtered = useMemo(() => {
