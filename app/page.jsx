@@ -122,11 +122,22 @@ const unassignFromUser = (id) => {
 
       {/* Tabs */}
       <div className="flex gap-2 mb-3">
-        {VIEWS.map((t) => (
-          <button key={t.id} className={tabClass(t.id)} onClick={() => setView(t.id)}>
-            {t.label}
-          </button>
-        ))}
+        {VIEWS.map((t) => {
+  const label =
+    role === 'admin'
+      ? (t.id === 'mine-ønsker'
+          ? 'Påmeldte'
+          : t.id === 'mine-tildelte'
+          ? 'Tildelte'
+          : t.label)
+      : t.label;
+
+  return (
+    <button key={t.id} className={tabClass(t.id)} onClick={() => setView(t.id)}>
+      {label}
+    </button>
+  );
+})}
       </div>
 
       {/* Søk */}
