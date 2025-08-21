@@ -32,18 +32,20 @@ const [to, setTo] = useState('');     // YYYY-MM-DD
     `px-3 py-1 rounded-full border text-sm ${
       value === view ? 'bg-black text-white border-black' : 'bg-white'
     }`;
-
-  const resetFilters = () => {
+  
+const resetFilters = () => {
   setQuery('');
   setTypeFilter('alle');
   setSortBy('date_asc');
   setView('ledige');
   setOpenId(null);
-  setFrom(''); // NY
-  setTo('');   // NY
+  setFrom('');   // dato: fra
+  setTo('');     // dato: til
 
-  // rydder lagret UI-tilstand
-  try { if (typeof window !== 'undefined') localStorage.removeItem(STORAGE_KEY); } catch {}
+  // Rydd lagret UI-tilstand
+  try {
+    if (typeof window !== 'undefined') localStorage.removeItem(STORAGE_KEY);
+  } catch {}
 };
 
   useEffect(() => {
