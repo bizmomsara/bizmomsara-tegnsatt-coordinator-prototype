@@ -197,23 +197,15 @@ const formatDate = (iso) => {
 
       {/* Tabs */}
       <div className="flex gap-2 mb-3">
-        {VIEWS.map((t) => {
-  const label =
-    role === 'admin'
-      ? (t.id === 'mine-ønsker'
-          ? 'Påmeldte'
-          : t.id === 'mine-tildelte'
-          ? 'Tildelte'
-          : t.label)
-      : t.label;
+        const views = role === 'admin' ? ADMIN_VIEWS : VIEWS;
 
-  return (
+<div className="flex gap-2 mb-3">
+  {views.map((t) => (
     <button key={t.id} className={tabClass(t.id)} onClick={() => setView(t.id)}>
-      {label}
+      {t.label}
     </button>
-  );
-})}
-      </div>
+  ))}
+</div>
 
       {/* Søk */}
       <input
