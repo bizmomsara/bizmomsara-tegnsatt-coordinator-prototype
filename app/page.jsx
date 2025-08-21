@@ -65,20 +65,36 @@ export default function Page() {
   const withdraw = (id) =>
     setJobs((prev) => prev.map((a) => (a.id === id ? { ...a, appliedByUser: false } : a)));
 
-  // Admin: tildel til bruker (demo) – øk assignedCount til maks slots
-  const assignToUser = (id) =>
-    setJobs((prev) =>
-      prev.map((a) => {
-        if (a.id !== id) return a;
-        const nextCount = Math.min(a.assignedCount + 1, a.slots);
-        return {
-          ...a,
-          assignedCount: nextCount, // oppdater antall tildelte
-          assignedToUser: true,     // i demoen: tildelt “meg”
-          appliedByUser: false,     // rydd bort eventuelt ønske
-        };
-      })
-    );
+// Admin: tildel til bruker (demo) – øk assignedCount til maks slots
+const assignToUser = (id) => {
+  setJobs((prev) =>
+    prev.map((a) => {
+      if (a.id !== id) return a;
+      const nextCount = Math.min(a.assignedCount + 1, a.slots);
+      return {
+        ...a,
+        assignedCount: nextCount, // oppdater antall tildelte
+        assignedToUser: true,     // i demoen: tildelt “meg”
+        appliedByUser: false,     // rydd bort eventuelt ønske
+      };
+    })
+  );
+};
+
+// Admin: fjern en tildeling (demo)
+const unassignFromUser = (id) => {
+  setJobs((prev) =>
+    prev.map((a) =>
+      a.id !== id
+        ? a
+        : {
+            ...a,
+            assignedCount: Math.max(0, a.assignedCount - 1),
+            assignedToUser: false,
+          }
+    )
+  );
+};
 
   return (
     <main className="max-w-3xl mx-auto p-4">
