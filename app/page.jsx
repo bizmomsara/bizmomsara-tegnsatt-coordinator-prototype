@@ -204,7 +204,6 @@ const formatDate = (iso) => {
   <button type="button" onClick={resetFilters} className="px-3 py-1 rounded border">
     Nullstill filtre
   </button>
-        try { if (typeof window !== 'undefined') localStorage.removeItem(STORAGE_KEY); } catch (err) {}
 
 
   {/* NYTT: dato fra/til */}
