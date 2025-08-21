@@ -42,6 +42,8 @@ const [to, setTo] = useState('');     // YYYY-MM-DD
   setOpenId(null);
   setFrom('');   // NY
   setTo('');     // NY
+    try { if (typeof window !== 'undefined') localStorage.removeItem(STORAGE_KEY); } catch {}
+
 };
   useEffect(() => {
   try {
