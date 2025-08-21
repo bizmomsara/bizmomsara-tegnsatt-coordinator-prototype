@@ -217,8 +217,8 @@ const formatDate = (iso) => {
                   <div>
                     <div className="font-medium">{a.title}</div>
                     <div className="text-sm opacity-70">
-                      {a.customer} — {a.date}
-                    </div>
+  {a.customer} — {formatDate(a.date)}
+</div>
                   </div>
                   <div className="flex items-center gap-2">
                     <span className="text-sm px-2 py-1 rounded-full border">{a.type}</span>
