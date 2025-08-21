@@ -11,6 +11,7 @@ const VIEWS = [
 ];
 
 const STATUS = {
+  const STORAGE_KEY = 'tegnsatt-ui-v1';
   inviting: { label: 'Åpne', className: 'bg-blue-50 text-blue-700 border-blue-200' },
   partly_filled: { label: 'Delvis bemannet', className: 'bg-yellow-50 text-yellow-800 border-yellow-200' },
   filled: { label: 'Bemannet', className: 'bg-green-50 text-green-800 border-green-200' },
