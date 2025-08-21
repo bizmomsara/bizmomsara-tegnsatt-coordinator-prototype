@@ -40,11 +40,13 @@ const [to, setTo] = useState('');     // YYYY-MM-DD
   setSortBy('date_asc');
   setView('ledige');
   setOpenId(null);
-  setFrom('');   // NY
-  setTo('');     // NY
-    try { if (typeof window !== 'undefined') localStorage.removeItem(STORAGE_KEY); } catch {}
+  setFrom(''); // NY
+  setTo('');   // NY
 
+  // rydder lagret UI-tilstand
+  try { if (typeof window !== 'undefined') localStorage.removeItem(STORAGE_KEY); } catch {}
 };
+
   useEffect(() => {
   try {
     if (typeof window === 'undefined') return;
