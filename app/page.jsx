@@ -202,10 +202,9 @@ const formatDate = (iso) => {
     <button key={t} className={chipClass(t)} onClick={() => setTypeFilter(t)}>{t}</button>
   ))}
 
-  <button type="button" onClick={resetFilters} className="px-3 py-1 rounded border">
-    Nullstill filtre
-  </button>
-
+ <button type="button" onClick={resetFilters} className="px-3 py-1 rounded border">
+  Nullstill filtre
+</button>
 
   {/* NYTT: dato fra/til */}
   <label className="text-sm opacity-70">Fra:</label>
