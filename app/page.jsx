@@ -1,4 +1,8 @@
 'use client';
+import { useEffect, useMemo, useState } from 'react';
+import { getJobs } from '@/lib/getJobs';
+import { INITIAL } from '@/lib/seed';
+
 const VIEWS = [
   { id: 'ledige', label: 'Ledige' },
   { id: 'mine-ønsker', label: 'Mine ønsker' },
