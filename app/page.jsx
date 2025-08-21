@@ -107,7 +107,13 @@ const unassignFromUser = (id) => {
     )
   );
 };
-
+// Vis dato som DD-MM-YYYY  ⬅️ LIM INN DENNE HER
+const formatDate = (iso) => {
+  if (!iso) return '';
+  const [y, m, d] = iso.split('-');
+  return `${String(d).padStart(2, '0')}-${String(m).padStart(2, '0')}-${y}`;
+};
+  
   return (
     <main className="max-w-3xl mx-auto p-4">
       {/* Topp: tittel + rolle */}
