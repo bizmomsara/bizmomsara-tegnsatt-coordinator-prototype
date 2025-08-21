@@ -1,3 +1,4 @@
+'use client';
 const VIEWS = [
   { id: 'ledige', label: 'Ledige' },
   { id: 'mine-ønsker', label: 'Mine ønsker' },
