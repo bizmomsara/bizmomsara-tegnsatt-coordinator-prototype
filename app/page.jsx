@@ -49,8 +49,16 @@ const [to, setTo] = useState('');     // YYYY-MM-DD
 
   // GDPR- og visningsfiltrering (fra datalaget)
   const filtered = useMemo(() => {
-    return getJobs({ allJobs: jobs, view, typeFilter, query, role });
-  }, [jobs, view, typeFilter, query, role]);
+  return getJobs({
+    allJobs: jobs,
+    view,
+    typeFilter,
+    query,
+    role,
+    dateFrom: from,   // NY
+    dateTo: to,       // NY
+  });
+}, [jobs, view, typeFilter, query, role, from, to]); // ← legg til from, to
 
   // Sortering på dato
   const displayed = useMemo(() => {
