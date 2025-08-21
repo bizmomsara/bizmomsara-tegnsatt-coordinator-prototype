@@ -28,6 +28,7 @@ export default function Page() {
   const [from, setFrom] = useState(''); // YYYY-MM-DD
 const [to, setTo] = useState('');     // YYYY-MM-DD
 
+
   const chipClass = (value) =>
     `text-sm px-3 py-1 rounded-full border transition ${
       value === typeFilter ? 'bg-black text-white border-black' : 'bg-white'
@@ -47,6 +48,33 @@ const [to, setTo] = useState('');     // YYYY-MM-DD
   setFrom('');   // NY
   setTo('');     // NY
 };
+  useEffect(() => {
+  try {
+    if (typeof window === 'undefined') return;
+    const raw = localStorage.getItem(STORAGE_KEY);
+    if (!raw) return;
+    const s = JSON.parse(raw);
+    if (s.role) setRole(s.role);
+    if (s.view) setView(s.view);
+    if (typeof s.query === 'string') setQuery(s.query);
+    if (s.typeFilter) setTypeFilter(s.typeFilter);
+    if (s.sortBy) setSortBy(s.sortBy);
+    if (typeof s.from === 'string') setFrom(s.from);
+    if (typeof s.to === 'string') setTo(s.to);
+  } catch (err) {
+    // ignorer
+  }
+}, []);
+useEffect(() => {
+  if (typeof window === 'undefined') return;
+  try {
+    const s = { role, view, query, typeFilter, sortBy, from, to };
+    localStorage.setItem(STORAGE_KEY, JSON.stringify(s));
+  } catch (err) {
+    // ignorer
+  }
+}, [role, view, query, typeFilter, sortBy, from, to]);
+
 
   // GDPR- og visningsfiltrering (fra datalaget)
   const filtered = useMemo(() => {
@@ -177,6 +205,8 @@ const formatDate = (iso) => {
   <button type="button" onClick={resetFilters} className="px-3 py-1 rounded border">
     Nullstill filtre
   </button>
+        try { if (typeof window !== 'undefined') localStorage.removeItem(STORAGE_KEY); } catch (err) {}
+
 
   {/* NYTT: dato fra/til */}
   <label className="text-sm opacity-70">Fra:</label>
