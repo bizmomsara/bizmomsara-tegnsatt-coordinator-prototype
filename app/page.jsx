@@ -162,31 +162,35 @@ const unassignFromUser = (id) => {
 
       {/* Filterlinje */}
       <div className="flex flex-wrap items-center gap-2 mb-4">
-        <button className={chipClass('alle')} onClick={() => setTypeFilter('alle')}>
-          alle
-        </button>
-        {TYPES.map((t) => (
-          <button key={t} className={chipClass(t)} onClick={() => setTypeFilter(t)}>
-            {t}
-          </button>
-        ))}
+  <button className={chipClass('alle')} onClick={() => setTypeFilter('alle')}>alle</button>
+  {TYPES.map((t) => (
+    <button key={t} className={chipClass(t)} onClick={() => setTypeFilter(t)}>{t}</button>
+  ))}
 
-        <button type="button" onClick={resetFilters} className="px-3 py-1 rounded border">
-          Nullstill filtre
-        </button>
+  <button type="button" onClick={resetFilters} className="px-3 py-1 rounded border">
+    Nullstill filtre
+  </button>
 
-        <div className="ml-auto flex items-center gap-2">
-          <label className="text-sm opacity-70">Sorter:</label>
-          <select
-            value={sortBy}
-            onChange={(e) => setSortBy(e.target.value)}
-            className="border rounded-lg px-2 py-1 text-sm bg-white"
-          >
-            <option value="date_asc">Dato ↑</option>
-            <option value="date_desc">Dato ↓</option>
-          </select>
-        </div>
-      </div>
+  {/* NYTT: dato fra/til */}
+  <label className="text-sm opacity-70">Fra:</label>
+  <input type="date" value={from} onChange={(e) => setFrom(e.target.value)}
+         className="border rounded-lg px-2 py-1 text-sm bg-white" />
+  <label className="text-sm opacity-70">Til:</label>
+  <input type="date" value={to} onChange={(e) => setTo(e.target.value)}
+         className="border rounded-lg px-2 py-1 text-sm bg-white" />
+
+  <div className="ml-auto flex items-center gap-2">
+    <label className="text-sm opacity-70">Sorter:</label>
+    <select
+      value={sortBy}
+      onChange={(e) => setSortBy(e.target.value)}
+      className="border rounded-lg px-2 py-1 text-sm bg-white"
+    >
+      <option value="date_asc">Dato ↑</option>
+      <option value="date_desc">Dato ↓</option>
+    </select>
+  </div>
+</div>
 
       {/* Treff-teller */}
       <div className="mb-2 text-sm opacity-70">{displayed.length} treff</div>
