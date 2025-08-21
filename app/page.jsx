@@ -235,7 +235,6 @@ const unassignFromUser = (id) => {
                     )}
 {role === 'admin' && (
   <>
-    {/* ← BYTT denne knappen ut med varianten under */}
     <button
       className={`px-3 py-1 rounded border ${
         a.assignedCount >= a.slots ? 'opacity-50 cursor-not-allowed' : ''
