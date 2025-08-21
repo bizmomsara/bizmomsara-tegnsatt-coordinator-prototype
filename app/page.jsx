@@ -234,10 +234,18 @@ const unassignFromUser = (id) => {
                       </button>
                     )}
                     {role === 'admin' && (
-                      <button className="px-3 py-1 rounded border" onClick={() => assignToUser(a.id)}>
-                        Tildel til bruker (demo)
-                      </button>
-                    )}
+  <>
+    <button className="px-3 py-1 rounded border" onClick={() => assignToUser(a.id)}>
+      Tildel til bruker (demo)
+    </button>
+    {a.assignedCount > 0 && (
+      <button className="px-3 py-1 rounded border" onClick={() => unassignFromUser(a.id)}>
+        Fjern tildeling (demo)
+      </button>
+    )}
+  </>
+)}
+
                   </div>
                 </div>
               )}
