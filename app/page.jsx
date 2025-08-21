@@ -24,6 +24,8 @@ export default function Page() {
   const [query, setQuery] = useState('');
   const [typeFilter, setTypeFilter] = useState('alle');
   const [sortBy, setSortBy] = useState('date_asc'); // 'date_asc' | 'date_desc'
+  const [from, setFrom] = useState(''); // YYYY-MM-DD
+const [to, setTo] = useState('');     // YYYY-MM-DD
 
   const chipClass = (value) =>
     `text-sm px-3 py-1 rounded-full border transition ${
