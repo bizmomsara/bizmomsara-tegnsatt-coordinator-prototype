@@ -206,8 +206,8 @@ const formatDate = (iso) => {
   {TYPES.map((t) => (
     <button key={t} className={chipClass(t)} onClick={() => setTypeFilter(t)}>{t}</button>
   ))}
-
- <button type="button" onClick={resetFilters} className="px-3 py-1 rounded border">
+        
+<button type="button" onClick={resetFilters} className="px-3 py-1 rounded border">
   Nullstill filtre
 </button>
 
