@@ -3,6 +3,8 @@ import { useEffect, useMemo, useState } from 'react';
 import { getJobs } from '@/lib/getJobs';
 import { INITIAL } from '@/lib/seed';
 
+const TYPES = ['tegnspråk', 'skrivetolking'];  // ← BRUKES i filterknappene
+
 const VIEWS = [
   { id: 'ledige', label: 'Ledige' },
   { id: 'mine-ønsker', label: 'Mine ønsker' },
@@ -10,11 +12,14 @@ const VIEWS = [
 ];
 
 const STATUS = {
-  inviting: { label: 'Åpne', className: 'bg-blue-50 text-blue-700 border-blue-200' },
-  partly_filled: { label: 'Delvis bemannet', className: 'bg-yellow-50 text-yellow-800 border-yellow-200' },
-  filled: { label: 'Bemannet', className: 'bg-green-50 text-green-800 border-green-200' },
+  inviting:      { label: 'Åpne',             className: 'bg-blue-50 text-blue-700 border-blue-200' },
+  partly_filled: { label: 'Delvis bemannet',  className: 'bg-yellow-50 text-yellow-800 border-yellow-200' },
+  filled:        { label: 'Bemannet',         className: 'bg-green-50 text-green-800 border-green-200' },
 };
+
 const STORAGE_KEY = 'tegnsatt-ui-v1';
+
+const TYPES = ['tegnspråk', 'skrivetolking'];
 
 export default function Page() {
   const [role, setRole] = useState('tolk'); // 'tolk' | 'admin'
