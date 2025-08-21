@@ -273,6 +273,11 @@ const formatDate = (iso) => {
                   </div>
                   <div className="flex items-center gap-2">
                     <span className="text-sm px-2 py-1 rounded-full border">{a.type}</span>
+                    
+                    <span className="text-sm px-2 py-1 rounded-full border" title="tildelte / slots">
+  {(a.assignedCount ?? 0)}/{a.slots}
+</span>
+                    
                     {STATUS[a.status] && (
                       <span
                         className={`text-sm px-2 py-1 rounded-full border ${STATUS[a.status].className}`}
