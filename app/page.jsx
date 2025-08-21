@@ -271,21 +271,31 @@ const formatDate = (iso) => {
   {a.customer} — {formatDate(a.date)}
 </div>
                   </div>
-                  <div className="flex items-center gap-2">
-                    <span className="text-sm px-2 py-1 rounded-full border">{a.type}</span>
-                    
-                    <span className="text-sm px-2 py-1 rounded-full border" title="tildelte / slots">
-  {(a.assignedCount ?? 0)}/{a.slots}
-</span>
-                    
-                    {STATUS[a.status] && (
-                      <span
-                        className={`text-sm px-2 py-1 rounded-full border ${STATUS[a.status].className}`}
-                      >
-                        {STATUS[a.status].label}
-                      </span>
-                    )}
-                  </div>
+                 <div className="flex items-center gap-2">
+  <span className="text-sm px-2 py-1 rounded-full border">{a.type}</span>
+
+ {role === 'admin' && (() => {
+  const c = a.assignedCount ?? 0;
+  const cls =
+    c >= a.slots ? 'bg-green-50 text-green-700 border-green-200'
+  : c > 0       ? 'bg-yellow-50 text-yellow-800 border-yellow-200'
+                : '';
+  return (
+    <span className={`text-sm px-2 py-1 rounded-full border ${cls}`} title="tildelte / slots">
+      {c}/{a.slots}
+    </span>
+  );
+})()}
+
+  {STATUS[a.status] && (
+    <span
+      className={`text-sm px-2 py-1 rounded-full border ${STATUS[a.status].className}`}
+    >
+      {STATUS[a.status].label}
+    </span>
+  )}
+</div>
+
                 </div>
               </button>
 
