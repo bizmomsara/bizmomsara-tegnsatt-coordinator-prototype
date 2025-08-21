@@ -195,13 +195,14 @@ const formatDate = (iso) => {
         </div>
       </div>
 
-      {/* Tabs */}
-      <div className="flex gap-2 mb-3">
-        const views = role === 'admin' ? ADMIN_VIEWS : VIEWS;
-
+ {/* Tabs */}
 <div className="flex gap-2 mb-3">
   {views.map((t) => (
-    <button key={t.id} className={tabClass(t.id)} onClick={() => setView(t.id)}>
+    <button
+      key={t.id}
+      className={tabClass(t.id)}
+      onClick={() => setView(t.id)}
+    >
       {t.label}
     </button>
   ))}
