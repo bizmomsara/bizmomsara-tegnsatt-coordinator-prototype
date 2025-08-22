@@ -44,6 +44,7 @@ export default function Page() {
   const [sortBy, setSortBy] = useState('date_asc'); // 'date_asc' | 'date_desc'
   const [from, setFrom] = useState(''); // YYYY-MM-DD
   const [to, setTo]     = useState(''); // YYYY-MM-DD
+  const [interpreters, setInterpreters] = useState([]);
 
   // Data + UI-state
   const [assignments, setAssignments] = useState([]);
