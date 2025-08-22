@@ -317,8 +317,109 @@ export default function Page() {
         </div>
       </div>
 
-      {/* Treff-teller */}
+          {/* Treff-teller */}
       <div className="mb-2 text-sm opacity-70">{displayed.length} treff</div>
 
       {/* Liste */}
-      {displayed.le
+      {displayed.length === 0 ? (
+        <div className="opacity-70">Ingen treff.</div>
+      ) : (
+        <ul className="space-y-3">
+          {displayed.map((a) => {
+            const myWish = (a.wishIds || []).includes(currentUserId);
+            const wishCount = a.wishIds?.length ?? 0;
+
+            return (
+              <li key={a.id} className="border rounded-xl bg-white">
+                <button
+                  type="button"
+                  onClick={() => toggleDetails(a.id)}
+                  className="w-full text-left p-4 rounded-xl focus:outline-none focus:ring-2 focus:ring-offset-2 cursor-pointer"
+                >
+                  <div className="flex items-center justify-between">
+                    <div>
+                      <div className="font-medium">{a.title}</div>
+                      <div className="text-sm opacity-70">
+                        {a.customer} — {formatRange(a.startISO, a.endISO)}
+                      </div>
+                      <div className="text-sm opacity-70">{a.location}</div>
+                    </div>
+
+                    <div className="flex items-center gap-2">
+                      {a.type && (
+                        <span className="text-sm px-2 py-1 rounded-full border">{a.type}</span>
+                      )}
+
+                      <span
+                        className="text-sm px-2 py-1 rounded-full border"
+                        title="tildelte / slots"
+                      >
+                        {(a.assignedIds?.length ?? 0)}/{a.slots}
+                      </span>
+
+                      {role === 'admin' && wishCount > 0 && (
+                        <span className="text-sm px-2 py-1 rounded-full border bg-blue-50 text-blue-700 border-blue-200">
+                          {wishCount} påmeldt{wishCount === 1 ? '' : 'e'}
+                        </span>
+                      )}
+
+                      {UI_STATUS[a.status] && (
+                        <span className={`text-sm px-2 py-1 rounded-full border ${UI_STATUS[a.status].className}`}>
+                          {UI_STATUS[a.status].label}
+                        </span>
+                      )}
+                    </div>
+                  </div>
+                </button>
+
+                {openId === a.id && (
+                  <div className="border-t p-4 grid gap-3 md:grid-cols-2">
+                    <div className="text-sm space-y-1">
+                      <div><span className="font-medium">Kunde:</span> {a.customer}</div>
+                      <div><span className="font-medium">Sted:</span> {a.location}</div>
+                      <div><span className="font-medium">Tid:</span> {formatRange(a.startISO, a.endISO)}</div>
+                      <div><span className="font-medium">Type:</span> {a.type || '—'}</div>
+                      <div><span className="font-medium">Notater:</span> {a.notes || '—'}</div>
+                    </div>
+
+                    <div className="text-sm">
+                      <div className="font-medium mb-1">Tildelte tolker (ID-er)</div>
+                      <ul className="list-disc ml-5">
+                        {(a.assignedIds && a.assignedIds.length > 0)
+                          ? a.assignedIds.map((id) => <li key={id}>{id}</li>)
+                          : <li>Ingen tildelt ennå</li>}
+                      </ul>
+                    </div>
+
+                    {/* Handlingsknapper for TOLK: meld interesse / trekk ønske */}
+                    {role === 'tolk' && (
+                      <div className="md:col-span-2 flex gap-2 pt-2">
+                        {myWish ? (
+                          <button
+                            className="px-3 py-1 rounded border"
+                            onClick={() => withdrawMe(a)}
+                            disabled={busyId === a.id}
+                          >
+                            {busyId === a.id ? "Trekker…" : "Trekk ønske"}
+                          </button>
+                        ) : (
+                          <button
+                            className="px-3 py-1 rounded border"
+                            onClick={() => applyMe(a)}
+                            disabled={busyId === a.id}
+                          >
+                            {busyId === a.id ? "Sender…" : "Meld interesse"}
+                          </button>
+                        )}
+                      </div>
+                    )}
+                  </div>
+                )}
+              </li>
+            );
+          })}
+        </ul>
+      )}
+    </main>
+  );
+}
