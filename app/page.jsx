@@ -86,16 +86,20 @@ export default function Page() {
   }, []);
 
   const load = useCallback(async () => {
-    try {
-      setErr(null); setLoading(true);
-      const data = await fetchAllAssignments();
-      setAssignments(data);
-    } catch (e) {
-      setErr(e?.message || 'Noe gikk galt');
-    } finally {
-      setLoading(false);
-    }
-  }, []);
+  setErr(null);
+  setLoading(true);
+  try {
+    const ass = await fetchAllAssignments();
+    setAssignments(ass);
+
+    const ints = await fetchInterpreters();
+    setInterpreters(ints);
+  } catch (e) {
+    setErr(e?.message || 'Noe gikk galt');
+  } finally {
+    setLoading(false);
+  }
+}, []);
 
   // Første innlasting
   useEffect(() => { load(); }, [load]);
