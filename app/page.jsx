@@ -1,22 +1,28 @@
 'use client';
 
 import { useEffect, useMemo, useState, useCallback } from 'react';
-import { fetchAllAssignments } from '../lib/mockApi';
+import {
+  fetchAllAssignments,
+  applyForAssignment,
+  withdrawApplication,
+  // (senere for admin)
+  // assignInterpreter,
+  // unassignInterpreter,
+} from '../lib/mockApi';
 
 // Visninger (UI)
 const VIEWS = [
   { id: 'ledige',        label: 'Ledige' },
-  { id: 'mine-ønsker',   label: 'Mine ønsker' },   // (kommer senere – kan være tom)
+  { id: 'mine-ønsker',   label: 'Mine ønsker' },
   { id: 'mine-tildelte', label: 'Mine tildelte' },
 ];
 
 const ADMIN_VIEWS = [
   { id: 'ledige',        label: 'Ledige' },
-  { id: 'mine-ønsker',   label: 'Påmeldte' },      // (kommer senere – kan være tom)
+  { id: 'mine-ønsker',   label: 'Påmeldte' },     // for admin: viser oppdrag med interessenter
   { id: 'mine-tildelte', label: 'Tildelte' },
 ];
 
-// Status-badger for våre mock-statusverdier
 const UI_STATUS = {
   open:      { label: 'Åpne',            className: 'bg-blue-50 text-blue-700 border-blue-200' },
   partial:   { label: 'Delvis bemannet', className: 'bg-yellow-50 text-yellow-800 border-yellow-200' },
@@ -43,10 +49,11 @@ export default function Page() {
   const [loading, setLoading] = useState(true);
   const [err, setErr] = useState(null);
   const [openId, setOpenId] = useState(null);
+  const [busyId, setBusyId] = useState(null);
 
   const views = role === 'admin' ? ADMIN_VIEWS : VIEWS;
 
-  // "Innlogget" bruker-id for demo-filter (så "mine-tildelte" funker i mock)
+  // Demo: innlogget bruker-id
   const currentUserId = role === 'tolk' ? 'u2' : 'u1';
 
   // Hjelpere
@@ -57,13 +64,8 @@ export default function Page() {
     `px-3 py-1 rounded-full border text-sm ${value === view ? 'bg-black text-white border-black' : 'bg-white'}`;
 
   const resetFilters = () => {
-    setQuery('');
-    setTypeFilter('alle');
-    setSortBy('date_asc');
-    setView('ledige');
-    setOpenId(null);
-    setFrom('');
-    setTo('');
+    setQuery(''); setTypeFilter('alle'); setSortBy('date_asc');
+    setView('ledige'); setOpenId(null); setFrom(''); setTo('');
     try { if (typeof window !== 'undefined') localStorage.removeItem(STORAGE_KEY); } catch {}
   };
 
@@ -83,8 +85,7 @@ export default function Page() {
 
   const load = useCallback(async () => {
     try {
-      setErr(null);
-      setLoading(true);
+      setErr(null); setLoading(true);
       const data = await fetchAllAssignments();
       setAssignments(data);
     } catch (e) {
@@ -129,7 +130,7 @@ export default function Page() {
     return Array.from(set);
   }, [assignments]);
 
-  // Filtrering (erstatter getJobs)
+  // Filtrering
   const filtered = useMemo(() => {
     let list = [...assignments];
 
@@ -159,12 +160,16 @@ export default function Page() {
     } else if (view === 'mine-tildelte') {
       list = list.filter(a => (a.assignedIds || []).includes(currentUserId));
     } else if (view === 'mine-ønsker') {
-      // Ikke implementert i mock ennå – vis tom liste hvis felt ikke finnes
-      list = list.filter(a => a.appliedByUser === true);
+      if (role === 'tolk') {
+        list = list.filter(a => (a.wishIds || []).includes(currentUserId));
+      } else {
+        // admin: vis oppdrag som har påmeldte tolker
+        list = list.filter(a => (a.wishIds?.length ?? 0) > 0);
+      }
     }
 
     return list;
-  }, [assignments, typeFilter, query, from, to, view, currentUserId]);
+  }, [assignments, typeFilter, query, from, to, view, role, currentUserId]);
 
   // Sortering på startISO
   const displayed = useMemo(() => {
@@ -173,6 +178,31 @@ export default function Page() {
     if (sortBy === 'date_desc') arr.reverse();
     return arr;
   }, [filtered, sortBy]);
+
+  // Handlers: tolk melder interesse / trekker ønske
+  const applyMe = useCallback(async (a) => {
+    try {
+      setBusyId(a.id);
+      await applyForAssignment({ assignmentId: a.id, userId: currentUserId });
+      await load();
+    } catch (e) {
+      alert(e?.message || 'Klarte ikke å melde interesse.');
+    } finally {
+      setBusyId(null);
+    }
+  }, [currentUserId, load]);
+
+  const withdrawMe = useCallback(async (a) => {
+    try {
+      setBusyId(a.id);
+      await withdrawApplication({ assignmentId: a.id, userId: currentUserId });
+      await load();
+    } catch (e) {
+      alert(e?.message || 'Klarte ikke å trekke ønsket.');
+    } finally {
+      setBusyId(null);
+    }
+  }, [currentUserId, load]);
 
   // RENDER
   if (loading) {
@@ -232,7 +262,7 @@ export default function Page() {
 
       {/* Tabs */}
       <div className="flex gap-2 mb-3">
-        {views.map((t) => (
+        {(role === 'admin' ? ADMIN_VIEWS : VIEWS).map((t) => (
           <button key={t.id} className={tabClass(t.id)} onClick={() => setView(t.id)}>
             {t.label}
           </button>
@@ -291,71 +321,4 @@ export default function Page() {
       <div className="mb-2 text-sm opacity-70">{displayed.length} treff</div>
 
       {/* Liste */}
-      {displayed.length === 0 ? (
-        <div className="opacity-70">Ingen treff.</div>
-      ) : (
-        <ul className="space-y-3">
-          {displayed.map((a) => (
-            <li key={a.id} className="border rounded-xl bg-white">
-              <button
-                type="button"
-                onClick={() => toggleDetails(a.id)}
-                className="w-full text-left p-4 rounded-xl focus:outline-none focus:ring-2 focus:ring-offset-2 cursor-pointer"
-              >
-                <div className="flex items-center justify-between">
-                  <div>
-                    <div className="font-medium">{a.title}</div>
-                    <div className="text-sm opacity-70">
-                      {a.customer} — {formatRange(a.startISO, a.endISO)}
-                    </div>
-                    <div className="text-sm opacity-70">{a.location}</div>
-                  </div>
-
-                  <div className="flex items-center gap-2">
-                    {a.type && (
-                      <span className="text-sm px-2 py-1 rounded-full border">{a.type}</span>
-                    )}
-
-                    <span
-                      className="text-sm px-2 py-1 rounded-full border"
-                      title="tildelte / slots"
-                    >
-                      {(a.assignedIds?.length ?? 0)}/{a.slots}
-                    </span>
-
-                    {UI_STATUS[a.status] && (
-                      <span className={`text-sm px-2 py-1 rounded-full border ${UI_STATUS[a.status].className}`}>
-                        {UI_STATUS[a.status].label}
-                      </span>
-                    )}
-                  </div>
-                </div>
-              </button>
-
-              {openId === a.id && (
-                <div className="border-t p-4 grid gap-3 md:grid-cols-2">
-                  <div className="text-sm space-y-1">
-                    <div><span className="font-medium">Kunde:</span> {a.customer}</div>
-                    <div><span className="font-medium">Sted:</span> {a.location}</div>
-                    <div><span className="font-medium">Tid:</span> {formatRange(a.startISO, a.endISO)}</div>
-                    <div><span className="font-medium">Type:</span> {a.type || '—'}</div>
-                    <div><span className="font-medium">Notater:</span> {a.notes || '—'}</div>
-                  </div>
-
-                  <div className="text-sm">
-                    <div className="font-medium mb-1">Tildelte tolker (ID-er)</div>
-                    <ul className="list-disc ml-5">
-                      {(a.assignedIds && a.assignedIds.length > 0)
-                        ? a.assignedIds.map((id) => <li key={id}>{id}</li>)
-                        : <li>Ingen tildelt ennå</li>}
-                    </ul>
-                  </div>
-                </div>
-              )}
-            </li>
-          ))}
-        </ul>
-      )}
-    </main>
-  );
-}
+      {displayed.le
