@@ -3,12 +3,13 @@
 import { useEffect, useMemo, useState, useCallback } from 'react';
 import {
   fetchAllAssignments,
+  fetchInterpreters,
   applyForAssignment,
   withdrawApplication,
-  // (senere for admin)
-  // assignInterpreter,
-  // unassignInterpreter,
+  assignInterpreter,
+  unassignInterpreter,
 } from '../lib/mockApi';
+
 
 // Visninger (UI)
 const VIEWS = [
