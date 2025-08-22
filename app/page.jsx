@@ -398,7 +398,20 @@ const displayName = (id) => nameById[id] ?? id;
                       <div><span className="font-medium">Type:</span> {a.type || '—'}</div>
                       <div><span className="font-medium">Notater:</span> {a.notes || '—'}</div>
                     </div>
-
+                    
+{/* Påmeldte tolker */}
+<div className="text-sm">
+  <div className="font-medium mb-1">Påmeldte tolker</div>
+  {(a.wishIds?.length ?? 0) === 0 ? (
+    <div className="opacity-70">Ingen påmeldinger.</div>
+  ) : (
+    <ul className="space-y-1">
+      {a.wishIds.map((id) => (
+        <li key={id}>{displayName(id)}</li>
+      ))}
+    </ul>
+  )}
+</div>
                     <div className="text-sm">
                       <div className="font-medium mb-1">Tildelte tolker (ID-er)</div>
                       <ul className="list-disc ml-5">
