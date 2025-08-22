@@ -2,6 +2,7 @@
 import { useEffect, useMemo, useState } from 'react';
 import { getJobs } from '@/lib/getJobs';
 import { INITIAL } from '@/lib/seed';
+import { fetchAllAssignments } from "../lib/mockApi";
 
 const TYPES = ['tegnspråk', 'skrivetolking'];
 
