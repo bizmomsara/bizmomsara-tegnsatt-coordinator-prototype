@@ -3,6 +3,7 @@ import { useEffect, useMemo, useState } from 'react';
 import { getJobs } from '@/lib/getJobs';
 import { INITIAL } from '@/lib/seed';
 import { fetchAllAssignments } from "../lib/mockApi";
+import { useEffect, useState, useCallback } from "react";
 
 const TYPES = ['tegnspråk', 'skrivetolking'];
 
