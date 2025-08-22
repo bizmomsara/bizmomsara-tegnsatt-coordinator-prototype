@@ -144,8 +144,6 @@ export default function Page() {
   () => Object.fromEntries((interpreters || []).map(u => [u.id, u.name])),
   [interpreters]
 );
-
-// Bruk denne når du skal vise et navn:
 const displayName = (id) => nameById[id] ?? id;
 
   
@@ -405,8 +403,8 @@ const displayName = (id) => nameById[id] ?? id;
                       <div className="font-medium mb-1">Tildelte tolker (ID-er)</div>
                       <ul className="list-disc ml-5">
                         {(a.assignedIds && a.assignedIds.length > 0)
-                          ? a.assignedIds.map((id) => <li key={id}>{id}</li>)
-                          : <li>Ingen tildelt ennå</li>}
+  ? a.assignedIds.map((id) => <li key={id}>{displayName(id)}</li>)
+  : <li>Ingen tildelt ennå</li>}
                       </ul>
                     </div>
 
