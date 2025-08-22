@@ -1,255 +1,291 @@
 'use client';
-import { useEffect, useMemo, useState } from 'react';
-import { getJobs } from '@/lib/getJobs';
-import { INITIAL } from '@/lib/seed';
-import { fetchAllAssignments } from "../lib/mockApi";
-import { useEffect, useState, useCallback } from "react";
 
-const TYPES = ['tegnspråk', 'skrivetolking'];
+import { useEffect, useMemo, useState, useCallback } from 'react';
+import { fetchAllAssignments } from '../lib/mockApi';
 
+// Visninger (UI)
 const VIEWS = [
-  { id: 'ledige', label: 'Ledige' },
-  { id: 'mine-ønsker', label: 'Mine ønsker' },
+  { id: 'ledige',        label: 'Ledige' },
+  { id: 'mine-ønsker',   label: 'Mine ønsker' },   // (kommer senere – kan være tom)
   { id: 'mine-tildelte', label: 'Mine tildelte' },
 ];
 
 const ADMIN_VIEWS = [
-  { id: 'ledige', label: 'Ledige' },
-  { id: 'mine-ønsker', label: 'Påmeldte' },
+  { id: 'ledige',        label: 'Ledige' },
+  { id: 'mine-ønsker',   label: 'Påmeldte' },      // (kommer senere – kan være tom)
   { id: 'mine-tildelte', label: 'Tildelte' },
 ];
 
-const STATUS = {
-  inviting:      { label: 'Åpne',            className: 'bg-blue-50 text-blue-700 border-blue-200' },
-  partly_filled: { label: 'Delvis bemannet', className: 'bg-yellow-50 text-yellow-800 border-yellow-200' },
-  filled:        { label: 'Bemannet',        className: 'bg-green-50 text-green-800 border-green-200' },
+// Status-badger for våre mock-statusverdier
+const UI_STATUS = {
+  open:      { label: 'Åpne',            className: 'bg-blue-50 text-blue-700 border-blue-200' },
+  partial:   { label: 'Delvis bemannet', className: 'bg-yellow-50 text-yellow-800 border-yellow-200' },
+  full:      { label: 'Bemannet',        className: 'bg-green-50 text-green-800 border-green-200' },
+  draft:     { label: 'Kladd',           className: 'bg-purple-50 text-purple-700 border-purple-200' },
+  cancelled: { label: 'Avlyst',          className: 'bg-gray-100 text-gray-700 border-gray-200' },
+  done:      { label: 'Ferdig',          className: 'bg-gray-100 text-gray-700 border-gray-200' },
 };
 
 const STORAGE_KEY = 'tegnsatt-ui-v1';
 
 export default function Page() {
+  // Rolle/visning/filtre
   const [role, setRole] = useState('tolk'); // 'tolk' | 'admin'
-  const [view, setView] = useState('ledige'); // 'ledige' | 'mine-ønsker' | 'mine-tildelte'
-  const [jobs, setJobs] = useState(INITIAL);
-  const [openId, setOpenId] = useState(null);
+  const [view, setView] = useState('ledige');
   const [query, setQuery] = useState('');
   const [typeFilter, setTypeFilter] = useState('alle');
   const [sortBy, setSortBy] = useState('date_asc'); // 'date_asc' | 'date_desc'
   const [from, setFrom] = useState(''); // YYYY-MM-DD
-const [to, setTo] = useState('');     // YYYY-MM-DD
-const views = role === 'admin' ? ADMIN_VIEWS : VIEWS;
+  const [to, setTo]     = useState(''); // YYYY-MM-DD
 
+  // Data + UI-state
+  const [assignments, setAssignments] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [err, setErr] = useState(null);
+  const [openId, setOpenId] = useState(null);
 
+  const views = role === 'admin' ? ADMIN_VIEWS : VIEWS;
+
+  // "Innlogget" bruker-id for demo-filter (så "mine-tildelte" funker i mock)
+  const currentUserId = role === 'tolk' ? 'u2' : 'u1';
+
+  // Hjelpere
   const chipClass = (value) =>
-    `text-sm px-3 py-1 rounded-full border transition ${
-      value === typeFilter ? 'bg-black text-white border-black' : 'bg-white'
-    }`;
+    `text-sm px-3 py-1 rounded-full border transition ${value === typeFilter ? 'bg-black text-white border-black' : 'bg-white'}`;
 
   const tabClass = (value) =>
-    `px-3 py-1 rounded-full border text-sm ${
-      value === view ? 'bg-black text-white border-black' : 'bg-white'
-    }`;
-  
-const resetFilters = () => {
-  setQuery('');
-  setTypeFilter('alle');
-  setSortBy('date_asc');
-  setView('ledige');
-  setOpenId(null);
-  setFrom('');   // dato: fra
-  setTo('');     // dato: til
+    `px-3 py-1 rounded-full border text-sm ${value === view ? 'bg-black text-white border-black' : 'bg-white'}`;
 
-  // Rydd lagret UI-tilstand
-  try {
-    if (typeof window !== 'undefined') localStorage.removeItem(STORAGE_KEY);
-  } catch {}
-};
+  const resetFilters = () => {
+    setQuery('');
+    setTypeFilter('alle');
+    setSortBy('date_asc');
+    setView('ledige');
+    setOpenId(null);
+    setFrom('');
+    setTo('');
+    try { if (typeof window !== 'undefined') localStorage.removeItem(STORAGE_KEY); } catch {}
+  };
 
+  const formatRange = (startISO, endISO) => {
+    if (!startISO) return '';
+    const s = new Date(startISO);
+    const e = endISO ? new Date(endISO) : null;
+    const date = s.toLocaleDateString('no-NO');
+    const st   = s.toLocaleTimeString('no-NO', { hour: '2-digit', minute: '2-digit' });
+    const et   = e ? e.toLocaleTimeString('no-NO', { hour: '2-digit', minute: '2-digit' }) : '';
+    return `${date} ${st}${et ? ' – ' + et : ''}`;
+  };
+
+  const toggleDetails = useCallback((id) => {
+    setOpenId((curr) => (curr === id ? null : id));
+  }, []);
+
+  const load = useCallback(async () => {
+    try {
+      setErr(null);
+      setLoading(true);
+      const data = await fetchAllAssignments();
+      setAssignments(data);
+    } catch (e) {
+      setErr(e?.message || 'Noe gikk galt');
+    } finally {
+      setLoading(false);
+    }
+  }, []);
+
+  // Første innlasting
+  useEffect(() => { load(); }, [load]);
+
+  // Les lagret UI-tilstand
   useEffect(() => {
-  try {
+    try {
+      if (typeof window === 'undefined') return;
+      const raw = localStorage.getItem(STORAGE_KEY);
+      if (!raw) return;
+      const s = JSON.parse(raw);
+      if (s.role) setRole(s.role);
+      if (s.view) setView(s.view);
+      if (typeof s.query === 'string') setQuery(s.query);
+      if (s.typeFilter) setTypeFilter(s.typeFilter);
+      if (s.sortBy) setSortBy(s.sortBy);
+      if (typeof s.from === 'string') setFrom(s.from);
+      if (typeof s.to === 'string') setTo(s.to);
+    } catch {}
+  }, []);
+
+  // Lagre UI-tilstand
+  useEffect(() => {
     if (typeof window === 'undefined') return;
-    const raw = localStorage.getItem(STORAGE_KEY);
-    if (!raw) return;
-    const s = JSON.parse(raw);
-    if (s.role) setRole(s.role);
-    if (s.view) setView(s.view);
-    if (typeof s.query === 'string') setQuery(s.query);
-    if (s.typeFilter) setTypeFilter(s.typeFilter);
-    if (s.sortBy) setSortBy(s.sortBy);
-    if (typeof s.from === 'string') setFrom(s.from);
-    if (typeof s.to === 'string') setTo(s.to);
-  } catch (err) {
-    // ignorer
-  }
-}, []);
-useEffect(() => {
-  if (typeof window === 'undefined') return;
-  try {
-    const s = { role, view, query, typeFilter, sortBy, from, to };
-    localStorage.setItem(STORAGE_KEY, JSON.stringify(s));
-  } catch (err) {
-    // ignorer
-  }
-}, [role, view, query, typeFilter, sortBy, from, to]);
+    try {
+      const s = { role, view, query, typeFilter, sortBy, from, to };
+      localStorage.setItem(STORAGE_KEY, JSON.stringify(s));
+    } catch {}
+  }, [role, view, query, typeFilter, sortBy, from, to]);
 
+  // Dynamiske typer fra data (for filter-knapper)
+  const dynamicTypes = useMemo(() => {
+    const set = new Set(assignments.map(a => a.type).filter(Boolean));
+    return Array.from(set);
+  }, [assignments]);
 
-  // GDPR- og visningsfiltrering (fra datalaget)
+  // Filtrering (erstatter getJobs)
   const filtered = useMemo(() => {
-  return getJobs({
-    allJobs: jobs,
-    view,
-    typeFilter,
-    query,
-    role,
-    dateFrom: from,   // NY
-    dateTo: to,       // NY
-  });
-}, [jobs, view, typeFilter, query, role, from, to]); // ← legg til from, to
+    let list = [...assignments];
 
-  // Sortering på dato
+    // type-filter
+    if (typeFilter && typeFilter !== 'alle') {
+      list = list.filter(a => a.type === typeFilter);
+    }
+
+    // fritekst
+    const q = (query || '').trim().toLowerCase();
+    if (q) {
+      list = list.filter(a =>
+        [a.title, a.customer, a.location, a.notes]
+          .some(v => (v || '').toLowerCase().includes(q))
+      );
+    }
+
+    // dato-intervall (på startISO)
+    const fromDate = from ? new Date(from) : null;
+    const toDate   = to   ? new Date(`${to}T23:59:59`) : null;
+    if (fromDate) list = list.filter(a => new Date(a.startISO) >= fromDate);
+    if (toDate)   list = list.filter(a => new Date(a.startISO) <= toDate);
+
+    // visning
+    if (view === 'ledige') {
+      list = list.filter(a => (a.assignedIds?.length ?? 0) < a.slots && a.status !== 'cancelled' && a.status !== 'done');
+    } else if (view === 'mine-tildelte') {
+      list = list.filter(a => (a.assignedIds || []).includes(currentUserId));
+    } else if (view === 'mine-ønsker') {
+      // Ikke implementert i mock ennå – vis tom liste hvis felt ikke finnes
+      list = list.filter(a => a.appliedByUser === true);
+    }
+
+    return list;
+  }, [assignments, typeFilter, query, from, to, view, currentUserId]);
+
+  // Sortering på startISO
   const displayed = useMemo(() => {
     const arr = [...filtered];
-    arr.sort((a, b) => new Date(a.date) - new Date(b.date));
+    arr.sort((a, b) => new Date(a.startISO) - new Date(b.startISO));
     if (sortBy === 'date_desc') arr.reverse();
     return arr;
   }, [filtered, sortBy]);
 
-  // handlinger
-  const toggleOpen = (id) => setOpenId(openId === id ? null : id);
+  // RENDER
+  if (loading) {
+    return (
+      <main className="max-w-3xl mx-auto p-4">
+        <div className="p-4">Laster oppdrag…</div>
+      </main>
+    );
+  }
 
-  const applyFor = (id) =>
-  setJobs((prev) =>
-    prev.map((a) => {
-      if (a.id !== id) return a;
-      if (a.appliedByUser) return a; // allerede meldt
-      const nextApplied = (typeof a.appliedCount === 'number' ? a.appliedCount : 0) + 1;
-      return { ...a, appliedByUser: true, appliedCount: nextApplied };
-    })
-  );
+  if (err) {
+    return (
+      <main className="max-w-3xl mx-auto p-4">
+        <div className="text-red-700 mb-3">Feil: {err}</div>
+        <button onClick={load} className="px-3 py-1 rounded border bg-white hover:bg-gray-50">
+          Prøv igjen
+        </button>
+      </main>
+    );
+  }
 
-  const withdraw = (id) =>
-  setJobs((prev) =>
-    prev.map((a) => {
-      if (a.id !== id) return a;
-      if (!a.appliedByUser) return a; // ikke meldt
-      const curr = typeof a.appliedCount === 'number' ? a.appliedCount : 1;
-      return { ...a, appliedByUser: false, appliedCount: Math.max(0, curr - 1) };
-    })
-  );
-
-// Admin: tildel til bruker (demo) – øk assignedCount til maks slots
-const assignToUser = (id) => {
-  setJobs((prev) =>
-    prev.map((a) => {
-      if (a.id !== id) return a;
-      const nextCount = Math.min(a.assignedCount + 1, a.slots);
-      return {
-        ...a,
-        assignedCount: nextCount, // oppdater antall tildelte
-        assignedToUser: true,     // i demoen: tildelt “meg”
-        appliedByUser: false,     // rydd bort eventuelt ønske
-      };
-    })
-  );
-};
-
-// Admin: fjern en tildeling (demo)
-const unassignFromUser = (id) => {
-  setJobs((prev) =>
-    prev.map((a) =>
-      a.id !== id
-        ? a
-        : {
-            ...a,
-            assignedCount: Math.max(0, a.assignedCount - 1),
-            assignedToUser: false,
-          }
-    )
-  );
-};
-// Vis dato som DD-MM-YYYY  ⬅️ LIM INN DENNE HER
-const formatDate = (iso) => {
-  if (!iso) return '';
-  const [y, m, d] = iso.split('-');
-  return `${String(d).padStart(2, '0')}-${String(m).padStart(2, '0')}-${y}`;
-};
-  
   return (
     <main className="max-w-3xl mx-auto p-4">
-      {/* Topp: tittel + rolle */}
+      {/* Topp: tittel + rolle + oppdater */}
       <div className="mb-3 flex flex-wrap items-center justify-between gap-3">
-        <h1 className="text-2xl font-semibold">Tegnsatt — ledige oppdrag</h1>
-        <div className="flex items-center gap-2 text-sm">
-          <span>Rolle:</span>
+        <h1 className="text-2xl font-semibold">Tegnsatt — oppdrag</h1>
+
+        <div className="flex items-center gap-2">
+          <button
+            type="button"
+            onClick={load}
+            className="px-2 py-1 rounded border text-sm bg-white hover:bg-gray-50"
+            title="Hent siste"
+          >
+            Oppdater
+          </button>
+
+          <div className="w-px h-5 bg-gray-200 mx-1" />
+
+          <span className="text-sm">Rolle:</span>
           <button
             type="button"
             onClick={() => setRole('tolk')}
-            className={`px-2 py-1 rounded border ${role === 'tolk' ? 'bg-black text-white' : ''}`}
+            className={`px-2 py-1 rounded border text-sm ${role === 'tolk' ? 'bg-black text-white' : ''}`}
           >
             tolk
           </button>
           <button
             type="button"
             onClick={() => setRole('admin')}
-            className={`px-2 py-1 rounded border ${role === 'admin' ? 'bg-black text-white' : ''}`}
+            className={`px-2 py-1 rounded border text-sm ${role === 'admin' ? 'bg-black text-white' : ''}`}
           >
             admin
           </button>
         </div>
       </div>
 
- {/* Tabs */}
-<div className="flex gap-2 mb-3">
-  {views.map((t) => (
-    <button
-      key={t.id}
-      className={tabClass(t.id)}
-      onClick={() => setView(t.id)}
-    >
-      {t.label}
-    </button>
-  ))}
-</div>
+      {/* Tabs */}
+      <div className="flex gap-2 mb-3">
+        {views.map((t) => (
+          <button key={t.id} className={tabClass(t.id)} onClick={() => setView(t.id)}>
+            {t.label}
+          </button>
+        ))}
+      </div>
 
       {/* Søk */}
       <input
         value={query}
         onChange={(e) => setQuery(e.target.value)}
-        placeholder="Søk (tittel, kunde, sted)"
+        placeholder="Søk (tittel, kunde, sted, notater)"
         className="w-full mb-3 border rounded-lg p-2"
       />
 
       {/* Filterlinje */}
       <div className="flex flex-wrap items-center gap-2 mb-4">
-  <button className={chipClass('alle')} onClick={() => setTypeFilter('alle')}>alle</button>
-  {TYPES.map((t) => (
-    <button key={t} className={chipClass(t)} onClick={() => setTypeFilter(t)}>{t}</button>
-  ))}
-        
-<button type="button" onClick={resetFilters} className="px-3 py-1 rounded border">
-  Nullstill filtre
-</button>
+        <button className={chipClass('alle')} onClick={() => setTypeFilter('alle')}>alle</button>
+        {dynamicTypes.map((t) => (
+          <button key={t} className={chipClass(t)} onClick={() => setTypeFilter(t)}>{t}</button>
+        ))}
 
-  {/* NYTT: dato fra/til */}
-  <label className="text-sm opacity-70">Fra:</label>
-  <input type="date" value={from} onChange={(e) => setFrom(e.target.value)}
-         className="border rounded-lg px-2 py-1 text-sm bg-white" />
-  <label className="text-sm opacity-70">Til:</label>
-  <input type="date" value={to} onChange={(e) => setTo(e.target.value)}
-         className="border rounded-lg px-2 py-1 text-sm bg-white" />
+        <button type="button" onClick={resetFilters} className="px-3 py-1 rounded border">
+          Nullstill filtre
+        </button>
 
-  <div className="ml-auto flex items-center gap-2">
-    <label className="text-sm opacity-70">Sorter:</label>
-    <select
-      value={sortBy}
-      onChange={(e) => setSortBy(e.target.value)}
-      className="border rounded-lg px-2 py-1 text-sm bg-white"
-    >
-      <option value="date_asc">Dato ↑</option>
-      <option value="date_desc">Dato ↓</option>
-    </select>
-  </div>
-</div>
+        {/* dato fra/til */}
+        <label className="text-sm opacity-70">Fra:</label>
+        <input
+          type="date"
+          value={from}
+          onChange={(e) => setFrom(e.target.value)}
+          className="border rounded-lg px-2 py-1 text-sm bg-white"
+        />
+        <label className="text-sm opacity-70">Til:</label>
+        <input
+          type="date"
+          value={to}
+          onChange={(e) => setTo(e.target.value)}
+          className="border rounded-lg px-2 py-1 text-sm bg-white"
+        />
+
+        <div className="ml-auto flex items-center gap-2">
+          <label className="text-sm opacity-70">Sorter:</label>
+          <select
+            value={sortBy}
+            onChange={(e) => setSortBy(e.target.value)}
+            className="border rounded-lg px-2 py-1 text-sm bg-white"
+          >
+            <option value="date_asc">Dato ↑</option>
+            <option value="date_desc">Dato ↓</option>
+          </select>
+        </div>
+      </div>
 
       {/* Treff-teller */}
       <div className="mb-2 text-sm opacity-70">{displayed.length} treff</div>
@@ -263,106 +299,56 @@ const formatDate = (iso) => {
             <li key={a.id} className="border rounded-xl bg-white">
               <button
                 type="button"
-                onClick={() => toggleOpen(a.id)}
+                onClick={() => toggleDetails(a.id)}
                 className="w-full text-left p-4 rounded-xl focus:outline-none focus:ring-2 focus:ring-offset-2 cursor-pointer"
               >
                 <div className="flex items-center justify-between">
                   <div>
                     <div className="font-medium">{a.title}</div>
                     <div className="text-sm opacity-70">
-  {a.customer} — {formatDate(a.date)}
-</div>
+                      {a.customer} — {formatRange(a.startISO, a.endISO)}
+                    </div>
+                    <div className="text-sm opacity-70">{a.location}</div>
                   </div>
-                 <div className="flex items-center gap-2">
-  <span className="text-sm px-2 py-1 rounded-full border">{a.type}</span>
 
- {role === 'admin' && (() => {
-  const c = a.assignedCount ?? 0;
-  const cls =
-    c >= a.slots ? 'bg-green-50 text-green-700 border-green-200'
-  : c > 0       ? 'bg-yellow-50 text-yellow-800 border-yellow-200'
-                : '';
-  return (
-    <span className={`text-sm px-2 py-1 rounded-full border ${cls}`} title="tildelte / slots">
-      {c}/{a.slots}
-    </span>
-  );
-})()}
+                  <div className="flex items-center gap-2">
+                    {a.type && (
+                      <span className="text-sm px-2 py-1 rounded-full border">{a.type}</span>
+                    )}
 
-  {role === 'admin' && typeof a.appliedCount === 'number' && a.appliedCount > 0 && (
-  <span className="text-sm px-2 py-1 rounded-full border bg-blue-50 text-blue-700 border-blue-200">
-    {a.appliedCount} påmeldt{a.appliedCount === 1 ? '' : 'e'}
-  </span>
-)}
+                    <span
+                      className="text-sm px-2 py-1 rounded-full border"
+                      title="tildelte / slots"
+                    >
+                      {(a.assignedIds?.length ?? 0)}/{a.slots}
+                    </span>
 
-  {STATUS[a.status] && (
-    <span
-      className={`text-sm px-2 py-1 rounded-full border ${STATUS[a.status].className}`}
-    >
-      {STATUS[a.status].label}
-    </span>
-  )}
-</div>
-
+                    {UI_STATUS[a.status] && (
+                      <span className={`text-sm px-2 py-1 rounded-full border ${UI_STATUS[a.status].className}`}>
+                        {UI_STATUS[a.status].label}
+                      </span>
+                    )}
+                  </div>
                 </div>
               </button>
 
               {openId === a.id && (
                 <div className="border-t p-4 grid gap-3 md:grid-cols-2">
-                  <div>
-                    <div className="text-sm font-medium">Adresse</div>
-                    <div className="text-sm">{a.address}</div>
+                  <div className="text-sm space-y-1">
+                    <div><span className="font-medium">Kunde:</span> {a.customer}</div>
+                    <div><span className="font-medium">Sted:</span> {a.location}</div>
+                    <div><span className="font-medium">Tid:</span> {formatRange(a.startISO, a.endISO)}</div>
+                    <div><span className="font-medium">Type:</span> {a.type || '—'}</div>
+                    <div><span className="font-medium">Notater:</span> {a.notes || '—'}</div>
                   </div>
 
-                  <div>
-                    <div className="text-sm font-medium">Medtolk</div>
-                    <div className="text-sm">
-                      {a.coInterpreter ?? (
-                        <span className="italic opacity-70">Vises etter tildeling</span>
-                      )}
-                    </div>
-                  </div>
-
-                  <div className="md:col-span-2">
-                    <div className="text-sm font-medium">Merknader</div>
-                    <div className="text-sm">{a.requesterNotes || '—'}</div>
-                  </div>
-
-                                  {/* Handlingsknapper */}
-                  <div className="md:col-span-2 flex gap-2 pt-2">
-                    {role === 'tolk' && view === 'ledige' && a.appliedByUser === false && (
-                      <button className="px-3 py-1 rounded border" onClick={() => applyFor(a.id)}>
-                        Ønsker oppdraget
-                      </button>
-                    )}
-                    {role === 'tolk' && view === 'mine-ønsker' && a.appliedByUser === true && (
-                      <button className="px-3 py-1 rounded border" onClick={() => withdraw(a.id)}>
-                        Trekk ønske
-                      </button>
-                    )}
-
-                    {role === 'admin' && (
-                      <>
-                        <button
-                          className={`px-3 py-1 rounded border ${
-                            a.assignedCount >= a.slots ? 'opacity-50 cursor-not-allowed' : ''
-                          }`}
-                          onClick={() => assignToUser(a.id)}
-                          disabled={a.assignedCount >= a.slots}
-                        >
-                          Tildel til bruker (demo)
-                        </button>
-
-                        {a.assignedCount > 0 && (
-                          <button
-                            className="px-3 py-1 rounded border"
-                            onClick={() => unassignFromUser(a.id)}
-                          >
-                            Fjern tildeling (demo)
-                          </button>
-                        )}
-                      </>
-                    )}
+                  <div className="text-sm">
+                    <div className="font-medium mb-1">Tildelte tolker (ID-er)</div>
+                    <ul className="list-disc ml-5">
+                      {(a.assignedIds && a.assignedIds.length > 0)
+                        ? a.assignedIds.map((id) => <li key={id}>{id}</li>)
+                        : <li>Ingen tildelt ennå</li>}
+                    </ul>
                   </div>
                 </div>
               )}
