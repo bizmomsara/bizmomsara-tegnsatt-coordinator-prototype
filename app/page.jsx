@@ -46,6 +46,8 @@ export default function Page() {
   const [from, setFrom] = useState(''); // YYYY-MM-DD
   const [to, setTo]     = useState(''); // YYYY-MM-DD
   const [interpreters, setInterpreters] = useState([]);
+  
+
 
   // Data + UI-state
   const [assignments, setAssignments] = useState([]);
@@ -101,6 +103,7 @@ export default function Page() {
     setLoading(false);
   }
 }, []);
+
 
   // Første innlasting
   useEffect(() => { load(); }, [load]);
