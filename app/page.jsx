@@ -11,6 +11,7 @@ import {
 } from '../lib/mockApi';
 
 
+
 // Visninger (UI)
 const VIEWS = [
   { id: 'ledige',        label: 'Ledige' },
