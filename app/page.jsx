@@ -140,6 +140,15 @@ export default function Page() {
     return Array.from(set);
   }, [assignments]);
 
+  const nameById = useMemo(
+  () => Object.fromEntries((interpreters || []).map(u => [u.id, u.name])),
+  [interpreters]
+);
+
+// Bruk denne når du skal vise et navn:
+const displayName = (id) => nameById[id] ?? id;
+
+  
   // Filtrering
   const filtered = useMemo(() => {
     let list = [...assignments];
