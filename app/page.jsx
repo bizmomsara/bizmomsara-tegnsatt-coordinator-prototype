@@ -221,6 +221,31 @@ const displayName = (id) => nameById[id] ?? id;
     }
   }, [currentUserId, load]);
 
+const assignUser = useCallback(async (a, userId) => {
+  try {
+    setBusyId(a.id);
+    await assignInterpreter({ assignmentId: a.id, interpreterId: userId });
+    await load(); // henter oppdatert liste
+  } catch (e) {
+    alert(e?.message || 'Klarte ikke å tildele.');
+  } finally {
+    setBusyId(null);
+  }
+}, [load]);
+
+const unassignUser = useCallback(async (a, userId) => {
+  try {
+    setBusyId(a.id);
+    await unassignInterpreter({ assignmentId: a.id, interpreterId: userId });
+    await load();
+  } catch (e) {
+    alert(e?.message || 'Klarte ikke å fjerne tildeling.');
+  } finally {
+    setBusyId(null);
+  }
+}, [load]);
+
+  
   // RENDER
   if (loading) {
     return (
