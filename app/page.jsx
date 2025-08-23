@@ -172,18 +172,28 @@ const displayName = (id) => nameById[id] ?? id;
     if (toDate)   list = list.filter(a => new Date(a.startISO) <= toDate);
 
     // visning
-    if (view === 'ledige') {
-      list = list.filter(a => (a.assignedIds?.length ?? 0) < a.slots && a.status !== 'cancelled' && a.status !== 'done');
-    } else if (view === 'mine-tildelte') {
-      list = list.filter(a => (a.assignedIds || []).includes(currentUserId));
-    } else if (view === 'mine-ønsker') {
-      if (role === 'tolk') {
-        list = list.filter(a => (a.wishIds || []).includes(currentUserId));
-      } else {
-        // admin: vis oppdrag som har påmeldte tolker
-        list = list.filter(a => (a.wishIds?.length ?? 0) > 0);
-      }
-    }
+if (view === 'ledige') {
+  list = list.filter(
+    a => (a.assignedIds?.length ?? 0) < a.slots &&
+         a.status !== 'cancelled' &&
+         a.status !== 'done'
+  );
+} else if (view === 'mine-tildelte') {
+  if (role === 'tolk') {
+    // tolk: kun oppdrag der JEG er tildelt
+    list = list.filter(a => (a.assignedIds || []).includes(currentUserId));
+  } else {
+    // admin: ALLE oppdrag som har minst én tildelt
+    list = list.filter(a => (a.assignedIds?.length ?? 0) > 0);
+  }
+} else if (view === 'mine-ønsker') {
+  if (role === 'tolk') {
+    list = list.filter(a => (a.wishIds || []).includes(currentUserId));
+  } else {
+    list = list.filter(a => (a.wishIds?.length ?? 0) > 0);
+  }
+}
+
 
     return list;
   }, [assignments, typeFilter, query, from, to, view, role, currentUserId]);
