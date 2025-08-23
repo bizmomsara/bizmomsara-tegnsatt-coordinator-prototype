@@ -424,28 +424,61 @@ const unassignUser = useCallback(async (a, userId) => {
                       <div><span className="font-medium">Notater:</span> {a.notes || '—'}</div>
                     </div>
                     
-{/* Påmeldte tolker */}
+{/* Påmeldte tolker (admin kan tildele) */}
 <div className="text-sm">
   <div className="font-medium mb-1">Påmeldte tolker</div>
   {(a.wishIds?.length ?? 0) === 0 ? (
     <div className="opacity-70">Ingen påmeldinger.</div>
   ) : (
-    <ul className="space-y-1">
-      {a.wishIds.map((id) => (
-        <li key={id}>{displayName(id)}</li>
+    <ul className="list-disc ml-5">
+      {a.wishIds.map((id) => {
+        const alreadyAssigned = (a.assignedIds || []).includes(id);
+        const isFull = (a.assignedIds?.length ?? 0) >= a.slots;
+        return (
+          <li key={id} className="flex items-center gap-2">
+            <span>{displayName(id)}</span>
+            {role === 'admin' && (
+              <button
+                className="ml-auto px-2 py-1 rounded border text-xs"
+                onClick={() => assignUser(a, id)}
+                disabled={isFull || alreadyAssigned || busyId === a.id}
+                title={isFull ? 'Alle plasser er fylt' : (alreadyAssigned ? 'Allerede tildelt' : '')}
+              >
+                {busyId === a.id ? 'Tildeler…' : 'Tildel'}
+              </button>
+            )}
+          </li>
+        );
+      })}
+    </ul>
+  )}
+</div>
+
+{/* Tildelte tolker (admin kan fjerne) */}
+<div className="text-sm">
+  <div className="font-medium mb-1">Tildelte tolker</div>
+  {(a.assignedIds?.length ?? 0) === 0 ? (
+    <div className="opacity-70">Ingen tildelt ennå.</div>
+  ) : (
+    <ul className="list-disc ml-5">
+      {a.assignedIds.map((id) => (
+        <li key={id} className="flex items-center gap-2">
+          <span>{displayName(id)}</span>
+          {role === 'admin' && (
+            <button
+              className="ml-auto px-2 py-1 rounded border text-xs"
+              onClick={() => unassignUser(a, id)}
+              disabled={busyId === a.id}
+            >
+              {busyId === a.id ? 'Fjerner…' : 'Fjern'}
+            </button>
+          )}
+        </li>
       ))}
     </ul>
   )}
 </div>
-                    
-                    <div className="text-sm">
-                      <div className="font-medium mb-1">Tildelte tolker (ID-er)</div>
-                      <ul className="list-disc ml-5">
-                        {(a.assignedIds && a.assignedIds.length > 0)
-  ? a.assignedIds.map((id) => <li key={id}>{displayName(id)}</li>)
-  : <li>Ingen tildelt ennå</li>}
-                      </ul>
-                    </div>
+
 
                     {/* Handlingsknapper for TOLK: meld interesse / trekk ønske */}
                     {role === 'tolk' && (
