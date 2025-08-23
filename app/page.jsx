@@ -412,6 +412,7 @@ const displayName = (id) => nameById[id] ?? id;
     </ul>
   )}
 </div>
+                    
                     <div className="text-sm">
                       <div className="font-medium mb-1">Tildelte tolker (ID-er)</div>
                       <ul className="list-disc ml-5">
