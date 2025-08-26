@@ -173,6 +173,15 @@ const displayName = (id) => nameById[id] ?? id;
     if (toDate)   list = list.filter(a => new Date(a.startISO) <= toDate);
 
     // visning
+// Skjul fulle oppdrag for tolker som ikke er tildelt
+if (role === 'tolk') {
+  list = list.filter(a =>
+    (a.assignedIds || []).includes(currentUserId) ||           // jeg er tildelt
+    ((a.assignedIds?.length ?? 0) < a.slots)                   // ellers: må ikke være full
+  );
+}
+
+// visning
 if (view === 'ledige') {
   list = list.filter(
     a => (a.assignedIds?.length ?? 0) < a.slots &&
@@ -184,16 +193,22 @@ if (view === 'ledige') {
     // tolk: kun oppdrag der JEG er tildelt
     list = list.filter(a => (a.assignedIds || []).includes(currentUserId));
   } else {
-    // admin: ALLE oppdrag som har minst én tildelt
+    // admin: alle oppdrag med minst én tildelt
     list = list.filter(a => (a.assignedIds?.length ?? 0) > 0);
   }
 } else if (view === 'mine-ønsker') {
   if (role === 'tolk') {
-    list = list.filter(a => (a.wishIds || []).includes(currentUserId));
+    // viser bare ønsker som fortsatt ikke er fullbooket
+    list = list.filter(a =>
+      (a.wishIds || []).includes(currentUserId) &&
+      ((a.assignedIds?.length ?? 0) < a.slots)
+    );
   } else {
+    // admin: oppdrag som har påmeldte
     list = list.filter(a => (a.wishIds?.length ?? 0) > 0);
   }
 }
+
 
 
     return list;
