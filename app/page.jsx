@@ -114,21 +114,26 @@ const [seenWishIds, setSeenWishIds] = useState([]);         // for admin: påmel
   useEffect(() => { load(); }, [load]);
 
   // Les lagret UI-tilstand
-  useEffect(() => {
-    try {
-      if (typeof window === 'undefined') return;
-      const raw = localStorage.getItem(STORAGE_KEY);
-      if (!raw) return;
-      const s = JSON.parse(raw);
-      if (s.role) setRole(s.role);
-      if (s.view) setView(s.view);
-      if (typeof s.query === 'string') setQuery(s.query);
-      if (s.typeFilter) setTypeFilter(s.typeFilter);
-      if (s.sortBy) setSortBy(s.sortBy);
-      if (typeof s.from === 'string') setFrom(s.from);
-      if (typeof s.to === 'string') setTo(s.to);
-    } catch {}
-  }, []);
+ useEffect(() => {
+  try {
+    if (typeof window === 'undefined') return;
+    const raw = localStorage.getItem(STORAGE_KEY);
+    if (!raw) return;
+    const s = JSON.parse(raw);
+    if (s.role) setRole(s.role);
+    if (s.view) setView(s.view);
+    if (typeof s.query === 'string') setQuery(s.query);
+    if (s.typeFilter) setTypeFilter(s.typeFilter);
+    if (s.sortBy) setSortBy(s.sortBy);
+    if (typeof s.from === 'string') setFrom(s.from);
+    if (typeof s.to === 'string') setTo(s.to);
+    
+    if (Array.isArray(s.seenAssignedIds)) setSeenAssignedIds(s.seenAssignedIds);
+    if (Array.isArray(s.seenWishIds)) setSeenWishIds(s.seenWishIds);
+  } catch {
+    // ignorer
+  }
+}, []);
 
   // Lagre UI-tilstand
   useEffect(() => {
