@@ -12,3 +12,18 @@ export default function RootLayout({ children }) {
     </html>
   );
 }
+
+// app/layout.js
+import './globals.css'
+import { Toaster } from 'sonner'
+
+export default function RootLayout({ children }) {
+  return (
+    <html lang="no">
+      <body>
+        <Toaster richColors position="top-center" />
+        {children}
+      </body>
+    </html>
+  )
+}
