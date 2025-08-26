@@ -47,6 +47,10 @@ export default function Page() {
   const [from, setFrom] = useState(''); // YYYY-MM-DD
   const [to, setTo]     = useState(''); // YYYY-MM-DD
   const [interpreters, setInterpreters] = useState([]);
+  // Hva brukeren allerede har "sett"
+const [seenAssignedIds, setSeenAssignedIds] = useState([]); // for tolk: tildelte
+const [seenWishIds, setSeenWishIds] = useState([]);         // for admin: påmeldte
+
   
 
 
