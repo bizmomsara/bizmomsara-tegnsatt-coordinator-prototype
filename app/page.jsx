@@ -137,12 +137,13 @@ const [seenWishIds, setSeenWishIds] = useState([]);         // for admin: påmel
 
   // Lagre UI-tilstand
   useEffect(() => {
-    if (typeof window === 'undefined') return;
-    try {
-      const s = { role, view, query, typeFilter, sortBy, from, to };
-      localStorage.setItem(STORAGE_KEY, JSON.stringify(s));
-    } catch {}
-  }, [role, view, query, typeFilter, sortBy, from, to]);
+  if (typeof window === 'undefined') return;
+  try {
+    const s = { role, view, query, typeFilter, sortBy, from, to, seenAssignedIds, seenWishIds };
+    localStorage.setItem(STORAGE_KEY, JSON.stringify(s));
+  } catch {}
+}, [role, view, query, typeFilter, sortBy, from, to, seenAssignedIds, seenWishIds]);
+
 
   // Dynamiske typer fra data (for filter-knapper)
   const dynamicTypes = useMemo(() => {
