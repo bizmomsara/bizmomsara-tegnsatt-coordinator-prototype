@@ -298,12 +298,7 @@ const unassignUser = useCallback(async (a, userId) => {
             className="px-2 py-1 rounded border text-sm bg-white hover:bg-gray-50"
             title="Hent siste"
           >
-            Oppdater <button
-  onClick={() => toast.success('Toast test!')}
-  className="px-2 py-1 rounded border text-sm"
->
-  Test toast
-</button>
+            Oppdater 
 
           </button>
 
