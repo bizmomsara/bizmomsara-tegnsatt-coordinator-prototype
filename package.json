@@ -19,3 +19,9 @@
     "tailwindcss": "3.4.10"
   }
 }
+
+{
+  "dependencies": {
+    "sonner": "^1.0.0"
+  }
+}
