@@ -206,34 +206,7 @@ if (view === 'ledige') {
     return arr;
   }, [filtered, sortBy]);
 
-  // Handlers: tolk melder interesse / trekker ønske
- // Handlers: tolk melder interesse / trekker ønske
-const applyMe = useCallback(async (a) => {
-  try {
-    setBusyId(a.id);
-    await applyForAssignment({ assignmentId: a.id, userId: currentUserId });
-    await load();
-  } catch (e) {
-    alert(e?.message || 'Klarte ikke å melde interesse.');
-  } finally {
-    setBusyId(null);
-  }
-}, [currentUserId, load]);
-
-const withdrawMe = useCallback(async (a) => {
-  if (!confirm(`Trekk ønsket ditt for «${a.title}»?`)) return;
-  try {
-    setBusyId(a.id);
-    await withdrawApplication({ assignmentId: a.id, userId: currentUserId });
-    await load();
-  } catch (e) {
-    alert(e?.message || 'Klarte ikke å trekke ønsket.');
-  } finally {
-    setBusyId(null);
-  }
-}, [currentUserId, load]);
-
-  
+ 
 // Handlers: tolk melder interesse / trekker ønske
 const applyMe = useCallback(async (a) => {
   try {
@@ -266,7 +239,7 @@ const assignUser = useCallback(async (a, userId) => {
   try {
     setBusyId(a.id);
     await assignInterpreter({ assignmentId: a.id, interpreterId: userId });
-    await load(); // henter oppdatert liste
+    await load();
   } catch (e) {
     alert(e?.message || 'Klarte ikke å tildele.');
   } finally {
