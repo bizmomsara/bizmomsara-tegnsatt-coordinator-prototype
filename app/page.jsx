@@ -208,60 +208,71 @@ if (view === 'ledige') {
   }, [filtered, sortBy]);
 
  
-// Handlers: tolk melder interesse / trekker ønske
+// =================== Handlers ===================
+
+// TOLK: meld interesse
 const applyMe = useCallback(async (a) => {
   try {
     setBusyId(a.id);
     await applyForAssignment({ assignmentId: a.id, userId: currentUserId });
+    toast.success(`Meldte interesse for «${a.title}»`);
     await load();
   } catch (e) {
-    alert(e?.message || 'Klarte ikke å melde interesse.');
+    toast.error(e?.message || 'Klarte ikke å melde interesse.');
   } finally {
     setBusyId(null);
   }
 }, [currentUserId, load]);
 
+// TOLK: trekk ønske
 const withdrawMe = useCallback(async (a) => {
   if (!confirm(`Trekk ønsket ditt for «${a.title}»?`)) return;
   try {
     setBusyId(a.id);
     await withdrawApplication({ assignmentId: a.id, userId: currentUserId });
+    toast.success(`Trakk ønsket for «${a.title}»`);
     await load();
   } catch (e) {
-    alert(e?.message || 'Klarte ikke å trekke ønsket.');
+    toast.error(e?.message || 'Klarte ikke å trekke ønsket.');
   } finally {
     setBusyId(null);
   }
 }, [currentUserId, load]);
 
-// Handlers: admin tildel / fjern
+// ADMIN: tildel
 const assignUser = useCallback(async (a, userId) => {
   if (!confirm(`Tildele ${displayName(userId)} til «${a.title}»?`)) return;
   try {
     setBusyId(a.id);
     await assignInterpreter({ assignmentId: a.id, interpreterId: userId });
+    toast.success(`Tildelte ${displayName(userId)} til «${a.title}»`);
     await load();
   } catch (e) {
-    alert(e?.message || 'Klarte ikke å tildele.');
+    toast.error(e?.message || 'Klarte ikke å tildele.');
   } finally {
     setBusyId(null);
   }
 }, [load]);
 
+// ADMIN: fjern tildeling
 const unassignUser = useCallback(async (a, userId) => {
   if (!confirm(`Fjerne ${displayName(userId)} fra «${a.title}»?`)) return;
   try {
     setBusyId(a.id);
     await unassignInterpreter({ assignmentId: a.id, interpreterId: userId });
+    toast.success(`Fjernet ${displayName(userId)} fra «${a.title}»`);
     await load();
   } catch (e) {
-    alert(e?.message || 'Klarte ikke å fjerne tildeling.');
+    toast.error(e?.message || 'Klarte ikke å fjerne tildeling.');
   } finally {
     setBusyId(null);
   }
 }, [load]);
 
-  
+// ================= end Handlers =================
+
+
+
   // RENDER
   if (loading) {
     return (
