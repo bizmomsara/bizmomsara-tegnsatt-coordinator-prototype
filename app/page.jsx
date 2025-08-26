@@ -255,6 +255,45 @@ const unassignUser = useCallback(async (a, userId) => {
   }
 }, [load]);
 
+const assignUser = useCallback(async (a, userId) => {
+  if (!confirm(`Tildele ${displayName(userId)} til «${a.title}»?`)) return;
+  try {
+    setBusyId(a.id);
+    await assignInterpreter({ assignmentId: a.id, interpreterId: userId });
+    await load();
+  } catch (e) {
+    alert(e?.message || 'Klarte ikke å tildele.');
+  } finally {
+    setBusyId(null);
+  }
+}, [load]);
+
+  const unassignUser = useCallback(async (a, userId) => {
+  if (!confirm(`Fjerne ${displayName(userId)} fra «${a.title}»?`)) return;
+  try {
+    setBusyId(a.id);
+    await unassignInterpreter({ assignmentId: a.id, interpreterId: userId });
+    await load();
+  } catch (e) {
+    alert(e?.message || 'Klarte ikke å fjerne tildeling.');
+  } finally {
+    setBusyId(null);
+  }
+}, [load]);
+
+  const withdrawMe = useCallback(async (a) => {
+  if (!confirm(`Trekk ønsket ditt for «${a.title}»?`)) return;
+  try {
+    setBusyId(a.id);
+    await withdrawApplication({ assignmentId: a.id, userId: currentUserId });
+    await load();
+  } catch (e) {
+    alert(e?.message || 'Klarte ikke å trekke ønsket.');
+  } finally {
+    setBusyId(null);
+  }
+}, [currentUserId, load]);
+
   
   // RENDER
   if (loading) {
