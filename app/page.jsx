@@ -266,6 +266,7 @@ const unassignUser = useCallback(async (a, userId) => {
   if (loading) {
     return (
       <main className="max-w-3xl mx-auto p-4">
+        <Toaster richColors position="top-center" />
         <div className="p-4">Laster oppdrag…</div>
       </main>
     );
@@ -274,6 +275,7 @@ const unassignUser = useCallback(async (a, userId) => {
   if (err) {
     return (
       <main className="max-w-3xl mx-auto p-4">
+        <Toaster richColors position="top-center" />
         <div className="text-red-700 mb-3">Feil: {err}</div>
         <button onClick={load} className="px-3 py-1 rounded border bg-white hover:bg-gray-50">
           Prøv igjen
@@ -284,6 +286,7 @@ const unassignUser = useCallback(async (a, userId) => {
 
   return (
     <main className="max-w-3xl mx-auto p-4">
+      <Toaster richColors position="top-center" />
       {/* Topp: tittel + rolle + oppdater */}
       <div className="mb-3 flex flex-wrap items-center justify-between gap-3">
         <h1 className="text-2xl font-semibold">Tegnsatt — oppdrag</h1>
@@ -295,7 +298,13 @@ const unassignUser = useCallback(async (a, userId) => {
             className="px-2 py-1 rounded border text-sm bg-white hover:bg-gray-50"
             title="Hent siste"
           >
-            Oppdater
+            Oppdater <button
+  onClick={() => toast.success('Toast test!')}
+  className="px-2 py-1 rounded border text-sm"
+>
+  Test toast
+</button>
+
           </button>
 
           <div className="w-px h-5 bg-gray-200 mx-1" />
