@@ -560,13 +560,26 @@ const labelFor = (id) => {
                           </button>
                         ) : (
                           <button
-                            className="px-3 py-1 rounded border"
-                            onClick={() => applyMe(a)}
-                            disabled={busyId === a.id || isFull}
-                            title={isFull ? 'Alle plasser er fylt' : ''}
-                          >
-                            {busyId === a.id ? 'Sender…' : 'Meld interesse'}
-                          </button>
+  className="px-3 py-1 rounded border"
+  onClick={() => applyMe(a)}
+  disabled={busyId === a.id || isAssignedToMe || isFull}
+  title={isAssignedToMe ? 'Du er allerede tildelt' : (isFull ? 'Alle plasser er fylt' : '')}
+>
+  {busyId === a.id ? 'Sender…' : 'Meld interesse'}
+</button>
+
+                        {!isAssignedToMe && (
+  <button
+    className="px-3 py-1 rounded border"
+    onClick={() => applyMe(a)}
+    disabled={busyId === a.id || isFull}
+    title={isFull ? 'Alle plasser er fylt' : ''}
+  >
+    {busyId === a.id ? 'Sender…' : 'Meld interesse'}
+  </button>
+)}
+
+                        
                         )}
                       </div>
                     )}
