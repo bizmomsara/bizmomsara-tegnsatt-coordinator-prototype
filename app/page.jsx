@@ -145,11 +145,11 @@ const labelFor = (id) => {
   );
 
   const wishAssignmentIds = useMemo(
-    () => (assignments || [])
-      .filter(a => (a?.wishIds?.length ?? 0) > 0)
-      .map(a => a.id),
-    [assignments]
-  );
+  () => (assignments || [])
+    .filter(a => (a.wishIds || []).some(id => !(a.assignedIds || []).includes(id)))
+    .map(a => a.id),
+  [assignments]
+);
 
   const unseenAssignedCount = useMemo(
     () => assignedToMeIds.filter(id => !seenAssignedIds.includes(id)).length,
