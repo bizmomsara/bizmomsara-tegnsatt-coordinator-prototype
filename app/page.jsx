@@ -492,33 +492,34 @@ const labelFor = (id) => {
                     </div>
 
                     {/* Påmeldte tolker (admin kan tildele) */}
-                    <div className="text-sm">
-                      <div className="font-medium mb-1">Påmeldte tolker</div>
-                      {(a?.wishIds?.length ?? 0) === 0 ? (
-                        <div className="opacity-70">Ingen påmeldinger.</div>
-                      ) : (
-                        <ul className="list-disc ml-5">
-                          {a.wishIds.map((id) => {
-                            const alreadyAssigned = Array.isArray(a?.assignedIds) && a.assignedIds.includes(id);
-                            return (
-                              <li key={id} className="flex items-center gap-2">
-                                <span>{displayName(id)}</span>
-                                {role === 'admin' && (
-                                  <button
-                                    className="ml-auto px-2 py-1 rounded border text-xs"
-                                    onClick={() => assignUser(a, id)}
-                                    disabled={isFull || alreadyAssigned || busyId === a.id}
-                                    title={isFull ? 'Alle plasser er fylt' : (alreadyAssigned ? 'Allerede tildelt' : '')}
-                                  >
-                                    {busyId === a.id ? 'Tildeler…' : 'Tildel'}
-                                  </button>
-                                )}
-                              </li>
-                            );
-                          })}
-                        </ul>
-                      )}
-                    </div>
+                    <ul className="list-disc ml-5">
+  {((a.wishIds || []).filter(id => !(a.assignedIds || []).includes(id))).length === 0 ? (
+    <li className="list-none opacity-70">Ingen påmeldinger.</li>
+  ) : (
+    (a.wishIds || [])
+      .filter(id => !(a.assignedIds || []).includes(id)) // <— vis bare de som IKKE er tildelt
+      .map((id) => {
+        const alreadyAssigned = (a.assignedIds || []).includes(id);
+        const isFull = (a.assignedIds?.length ?? 0) >= (a.slots ?? 0);
+        return (
+          <li key={id} className="flex items-center gap-2">
+            <span>{labelFor ? labelFor(id) : displayName(id)}</span>
+            {role === 'admin' && (
+              <button
+                className="ml-auto px-2 py-1 rounded border text-xs"
+                onClick={() => assignUser(a, id)}
+                disabled={isFull || alreadyAssigned || busyId === a.id}
+                title={isFull ? 'Alle plasser er fylt' : (alreadyAssigned ? 'Allerede tildelt' : '')}
+              >
+                {busyId === a.id ? 'Tildeler…' : 'Tildel'}
+              </button>
+            )}
+          </li>
+        );
+      })
+  )}
+</ul>
+
 
                     {/* Tildelte tolker (admin kan fjerne) */}
                     <div className="text-sm">
