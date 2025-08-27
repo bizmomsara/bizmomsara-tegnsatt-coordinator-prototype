@@ -144,6 +144,37 @@ const [seenWishIds, setSeenWishIds] = useState([]);         // for admin: påmel
   } catch {}
 }, [role, view, query, typeFilter, sortBy, from, to, seenAssignedIds, seenWishIds]);
 
+  useEffect(() => {
+  // Tolk: åpner "Tildelte" -> alt tildelt markeres sett
+  if (role === 'tolk' && view === 'mine-tildelte') {
+    setSeenAssignedIds(assignedToMeIds);
+  }
+  // Admin: åpner "Påmeldte" -> alle oppdrag med påmeldte markeres sett
+  if (role === 'admin' && view === 'mine-ønsker') {
+    setSeenWishIds(wishAssignmentIds);
+  }
+}, [role, view, assignedToMeIds, wishAssignmentIds]);
+useEffect(() => {
+  // Tolk: åpner "Tildelte" -> alt tildelt markeres sett
+  if (role === 'tolk' && view === 'mine-tildelte') {
+    setSeenAssignedIds(assignedToMeIds);
+  }
+  // Admin: åpner "Påmeldte" -> alle oppdrag med påmeldte markeres sett
+  if (role === 'admin' && view === 'mine-ønsker') {
+    setSeenWishIds(wishAssignmentIds);
+  }
+}, [role, view, assignedToMeIds, wishAssignmentIds]);
+
+  useEffect(() => {
+  // Tolk: åpner "Tildelte" -> alt tildelt markeres sett
+  if (role === 'tolk' && view === 'mine-tildelte') {
+    setSeenAssignedIds(assignedToMeIds);
+  }
+  // Admin: åpner "Påmeldte" -> alle oppdrag med påmeldte markeres sett
+  if (role === 'admin' && view === 'mine-ønsker') {
+    setSeenWishIds(wishAssignmentIds);
+  }
+}, [role, view, assignedToMeIds, wishAssignmentIds]);
 
   // Dynamiske typer fra data (for filter-knapper)
   const dynamicTypes = useMemo(() => {
@@ -157,7 +188,34 @@ const [seenWishIds, setSeenWishIds] = useState([]);         // for admin: påmel
 );
 const displayName = (id) => nameById[id] ?? id;
 
-  
+  // Oppdrag tildelt denne brukeren (ID-er)
+const assignedToMeIds = useMemo(
+  () => assignments
+    .filter(a => (a.assignedIds || []).includes(currentUserId))
+    .map(a => a.id),
+  [assignments, currentUserId]
+);
+
+// Oppdrag som har påmeldte (for admin)
+const wishAssignmentIds = useMemo(
+  () => assignments
+    .filter(a => (a.wishIds?.length ?? 0) > 0)
+    .map(a => a.id),
+  [assignments]
+);
+
+// Usette antall
+const unseenAssignedCount = useMemo(
+  () => assignedToMeIds.filter(id => !seenAssignedIds.includes(id)).length,
+  [assignedToMeIds, seenAssignedIds]
+);
+
+const unseenWishCount = useMemo(
+  () => wishAssignmentIds.filter(id => !seenWishIds.includes(id)).length,
+  [wishAssignmentIds, seenWishIds]
+);
+
+
   // Filtrering
   const filtered = useMemo(() => {
     let list = [...assignments];
