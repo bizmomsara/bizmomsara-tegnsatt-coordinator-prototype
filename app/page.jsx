@@ -443,7 +443,8 @@ const labelFor = (id) => {
             const assignedCount = a?.assignedIds?.length ?? 0;
             const isFull = assignedCount >= (a?.slots ?? 0);
             const myWish = Array.isArray(a?.wishIds) && a.wishIds.includes(currentUserId);
-
+            const isAssignedToMe = Array.isArray(a?.assignedIds) && a.assignedIds.includes(currentUserId);
+          
             return (
               <li key={a.id} className="border rounded-xl bg-white">
                 <button
