@@ -418,12 +418,33 @@ const unassignUser = useCallback(async (a, userId) => {
 
       {/* Tabs */}
       <div className="flex gap-2 mb-3">
-        {(role === 'admin' ? ADMIN_VIEWS : VIEWS).map((t) => (
-          <button key={t.id} className={tabClass(t.id)} onClick={() => setView(t.id)}>
-            {t.label}
-          </button>
-        ))}
-      </div>
+  {views.map((t) => {
+    // Bestem badge-tall per fane og rolle
+    let badge = null;
+    if (role === 'tolk' && t.id === 'mine-tildelte' && unseenAssignedCount > 0) {
+      badge = unseenAssignedCount;
+    }
+    if (role === 'admin' && t.id === 'mine-ønsker' && unseenWishCount > 0) {
+      badge = unseenWishCount;
+    }
+
+    return (
+      <button
+        key={t.id}
+        className={tabClass(t.id)}
+        onClick={() => setView(t.id)}
+      >
+        {t.label}
+        {badge ? (
+          <span className="ml-2 inline-flex items-center justify-center px-2 min-w-[1.25rem] h-5 rounded-full text-xs bg-black text-white">
+            {badge}
+          </span>
+        ) : null}
+      </button>
+    );
+  })}
+</div>
+
 
       {/* Søk */}
       <input
