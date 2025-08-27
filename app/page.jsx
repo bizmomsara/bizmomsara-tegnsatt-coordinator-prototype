@@ -119,10 +119,22 @@ export default function Page() {
   }, [assignments]);
 
   const nameById = useMemo(
-    () => Object.fromEntries((interpreters || []).map(u => [u.id, u.name])),
-    [interpreters]
-  );
-  const displayName = (id) => nameById[id] ?? id;
+  () => Object.fromEntries((interpreters || []).map(u => [u.id, u.name])),
+  [interpreters]
+);
+
+// Finn navn som finnes flere ganger
+const duplicateNames = useMemo(() => {
+  const count = new Map();
+  (interpreters || []).forEach(u => count.set(u.name, (count.get(u.name) || 0) + 1));
+  return new Set([...count.entries()].filter(([, c]) => c > 1).map(([n]) => n));
+}, [interpreters]);
+
+// Etikett vi viser i UI
+const labelFor = (id) => {
+  const name = nameById[id] ?? id;
+  return duplicateNames.has(name) ? `${name} (${id})` : name;
+};
 
   // For badge-varsler
   const assignedToMeIds = useMemo(
