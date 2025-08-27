@@ -24,7 +24,7 @@ const ADMIN_VIEWS = [
   { id: 'mine-tildelte', label: 'Tildelte' },
 ];
 
-// Status-badger (visuell)
+// UI-statuschips (kun visuelt)
 const UI_STATUS = {
   open:      { label: 'Åpne',            className: 'bg-blue-50 text-blue-700 border-blue-200' },
   partial:   { label: 'Delvis bemannet', className: 'bg-yellow-50 text-yellow-800 border-yellow-200' },
@@ -60,14 +60,14 @@ export default function Page() {
   const [openId, setOpenId] = useState(null);
   const [busyId, setBusyId] = useState(null);
 
-  // Ulest-varsler
-  const [seenAssignedIds, setSeenAssignedIds] = useState([]); // tolk
-  const [seenWishIds, setSeenWishIds] = useState([]);         // admin
+  // Ulest-varsler (badger)
+  const [seenAssignedIds, setSeenAssignedIds] = useState([]); // tolk: tildelte jeg har “sett”
+  const [seenWishIds, setSeenWishIds] = useState([]);         // admin: oppdrag med påmeldte jeg har “sett”
 
   const views = role === 'admin' ? ADMIN_VIEWS : VIEWS;
-  const currentUserId = role === 'tolk' ? 'u2' : 'u1';
+  const currentUserId = role === 'tolk' ? 'u2' : 'u1'; // demo-bruker
 
-  // --- Persistens: les ---
+  // --- LES fra localStorage ---
   useEffect(() => {
     try {
       if (typeof window === 'undefined') return;
@@ -103,7 +103,7 @@ export default function Page() {
   }, []);
   useEffect(() => { load(); }, [load]);
 
-  // --- Persistens: lagre ---
+  // --- LAGRE til localStorage ---
   useEffect(() => {
     if (typeof window === 'undefined') return;
     try {
@@ -112,31 +112,20 @@ export default function Page() {
     } catch {}
   }, [role, view, query, typeFilter, sortBy, from, to, seenAssignedIds, seenWishIds]);
 
-  // Avledet
+  // Avledet data
   const dynamicTypes = useMemo(() => {
     const set = new Set((assignments || []).map(a => a?.type).filter(Boolean));
     return Array.from(set);
   }, [assignments]);
 
+  // ID -> navn
   const nameById = useMemo(
-  () => Object.fromEntries((interpreters || []).map(u => [u.id, u.name])),
-  [interpreters]
-);
+    () => Object.fromEntries((interpreters || []).map(u => [u.id, u.name])),
+    [interpreters]
+  );
+  const displayName = (id) => nameById[id] ?? id;
 
-// Finn navn som finnes flere ganger
-const duplicateNames = useMemo(() => {
-  const count = new Map();
-  (interpreters || []).forEach(u => count.set(u.name, (count.get(u.name) || 0) + 1));
-  return new Set([...count.entries()].filter(([, c]) => c > 1).map(([n]) => n));
-}, [interpreters]);
-
-// Etikett vi viser i UI
-const labelFor = (id) => {
-  const name = nameById[id] ?? id;
-  return duplicateNames.has(name) ? `${name} (${id})` : name;
-};
-
-  // For badge-varsler
+  // Badge: hvilke oppdrag er tildelt meg?
   const assignedToMeIds = useMemo(
     () => (assignments || [])
       .filter(a => Array.isArray(a?.assignedIds) && a.assignedIds.includes(currentUserId))
@@ -144,24 +133,24 @@ const labelFor = (id) => {
     [assignments, currentUserId]
   );
 
+  // Badge: hvilke oppdrag har “ikke-tildelte påmeldte” (for admin)?
   const wishAssignmentIds = useMemo(
-  () => (assignments || [])
-    .filter(a => (a.wishIds || []).some(id => !(a.assignedIds || []).includes(id)))
-    .map(a => a.id),
-  [assignments]
-);
+    () => (assignments || [])
+      .filter(a => (a.wishIds || []).some(id => !(a.assignedIds || []).includes(id)))
+      .map(a => a.id),
+    [assignments]
+  );
 
   const unseenAssignedCount = useMemo(
     () => assignedToMeIds.filter(id => !seenAssignedIds.includes(id)).length,
     [assignedToMeIds, seenAssignedIds]
   );
-
   const unseenWishCount = useMemo(
     () => wishAssignmentIds.filter(id => !seenWishIds.includes(id)).length,
     [wishAssignmentIds, seenWishIds]
   );
 
-  // Marker som "sett" når riktig fane åpnes
+  // Marker som “sett” når fane åpnes
   useEffect(() => {
     if (role === 'tolk' && view === 'mine-tildelte') {
       setSeenAssignedIds(assignedToMeIds);
@@ -171,6 +160,7 @@ const labelFor = (id) => {
     }
   }, [role, view, assignedToMeIds, wishAssignmentIds]);
 
+  // Små hjelpere
   const formatRange = (startISO, endISO) => {
     if (!startISO) return '';
     const s = new Date(startISO);
@@ -211,7 +201,7 @@ const labelFor = (id) => {
     if (fromDate) list = list.filter(a => new Date(a?.startISO) >= fromDate);
     if (toDate)   list = list.filter(a => new Date(a?.startISO) <= toDate);
 
-    // Skjul fulle oppdrag for andre tolker enn de som er tildelt
+    // Skjul fulle oppdrag for tolker som ikke er tildelt
     if (role === 'tolk') {
       list = list.filter(a =>
         (Array.isArray(a?.assignedIds) && a.assignedIds.includes(currentUserId)) ||
@@ -239,7 +229,8 @@ const labelFor = (id) => {
           ((a?.assignedIds?.length ?? 0) < (a?.slots ?? 0))
         );
       } else {
-        list = list.filter(a => (a?.wishIds?.length ?? 0) > 0);
+        // admin: oppdrag som har ikke-tildelte påmeldte
+        list = list.filter(a => (a.wishIds || []).some(id => !(a.assignedIds || []).includes(id)));
       }
     }
 
@@ -444,7 +435,7 @@ const labelFor = (id) => {
             const isFull = assignedCount >= (a?.slots ?? 0);
             const myWish = Array.isArray(a?.wishIds) && a.wishIds.includes(currentUserId);
             const isAssignedToMe = Array.isArray(a?.assignedIds) && a.assignedIds.includes(currentUserId);
-          
+
             return (
               <li key={a.id} className="border rounded-xl bg-white">
                 <button
@@ -493,34 +484,35 @@ const labelFor = (id) => {
                     </div>
 
                     {/* Påmeldte tolker (admin kan tildele) */}
-                    <ul className="list-disc ml-5">
-  {((a.wishIds || []).filter(id => !(a.assignedIds || []).includes(id))).length === 0 ? (
-    <li className="list-none opacity-70">Ingen påmeldinger.</li>
-  ) : (
-    (a.wishIds || [])
-      .filter(id => !(a.assignedIds || []).includes(id)) // <— vis bare de som IKKE er tildelt
-      .map((id) => {
-        const alreadyAssigned = (a.assignedIds || []).includes(id);
-        const isFull = (a.assignedIds?.length ?? 0) >= (a.slots ?? 0);
-        return (
-          <li key={id} className="flex items-center gap-2">
-            <span>{labelFor ? labelFor(id) : displayName(id)}</span>
-            {role === 'admin' && (
-              <button
-                className="ml-auto px-2 py-1 rounded border text-xs"
-                onClick={() => assignUser(a, id)}
-                disabled={isFull || alreadyAssigned || busyId === a.id}
-                title={isFull ? 'Alle plasser er fylt' : (alreadyAssigned ? 'Allerede tildelt' : '')}
-              >
-                {busyId === a.id ? 'Tildeler…' : 'Tildel'}
-              </button>
-            )}
-          </li>
-        );
-      })
-  )}
-</ul>
-
+                    <div className="text-sm">
+                      <div className="font-medium mb-1">Påmeldte tolker</div>
+                      {((a.wishIds || []).filter(id => !(a.assignedIds || []).includes(id))).length === 0 ? (
+                        <div className="opacity-70">Ingen påmeldinger.</div>
+                      ) : (
+                        <ul className="list-disc ml-5">
+                          {(a.wishIds || [])
+                            .filter(id => !(a.assignedIds || []).includes(id)) // vis kun ikke-tildelte
+                            .map((id) => {
+                              const alreadyAssigned = (a.assignedIds || []).includes(id);
+                              return (
+                                <li key={id} className="flex items-center gap-2">
+                                  <span>{displayName(id)}</span>
+                                  {role === 'admin' && (
+                                    <button
+                                      className="ml-auto px-2 py-1 rounded border text-xs"
+                                      onClick={() => assignUser(a, id)}
+                                      disabled={isFull || alreadyAssigned || busyId === a.id}
+                                      title={isFull ? 'Alle plasser er fylt' : (alreadyAssigned ? 'Allerede tildelt' : '')}
+                                    >
+                                      {busyId === a.id ? 'Tildeler…' : 'Tildel'}
+                                    </button>
+                                  )}
+                                </li>
+                              );
+                            })}
+                        </ul>
+                      )}
+                    </div>
 
                     {/* Tildelte tolker (admin kan fjerne) */}
                     <div className="text-sm">
@@ -559,27 +551,16 @@ const labelFor = (id) => {
                             {busyId === a.id ? 'Trekker…' : 'Trekk ønske'}
                           </button>
                         ) : (
-                          <button
-  className="px-3 py-1 rounded border"
-  onClick={() => applyMe(a)}
-  disabled={busyId === a.id || isAssignedToMe || isFull}
-  title={isAssignedToMe ? 'Du er allerede tildelt' : (isFull ? 'Alle plasser er fylt' : '')}
->
-  {busyId === a.id ? 'Sender…' : 'Meld interesse'}
-</button>
-
-                        {!isAssignedToMe && (
-  <button
-    className="px-3 py-1 rounded border"
-    onClick={() => applyMe(a)}
-    disabled={busyId === a.id || isFull}
-    title={isFull ? 'Alle plasser er fylt' : ''}
-  >
-    {busyId === a.id ? 'Sender…' : 'Meld interesse'}
-  </button>
-)}
-
-                        
+                          !isAssignedToMe && (
+                            <button
+                              className="px-3 py-1 rounded border"
+                              onClick={() => applyMe(a)}
+                              disabled={busyId === a.id || isFull}
+                              title={isFull ? 'Alle plasser er fylt' : ''}
+                            >
+                              {busyId === a.id ? 'Sender…' : 'Meld interesse'}
+                            </button>
+                          )
                         )}
                       </div>
                     )}
