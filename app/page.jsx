@@ -60,12 +60,14 @@ export default function Page() {
   const [openId, setOpenId] = useState(null);
   const [busyId, setBusyId] = useState(null);
 
+  // Demo: innlogget tolk kan velges i UI når rolle = 'tolk'
+  const [currentUserId, setCurrentUserId] = useState('u2');
+
   // Ulest-varsler (badger)
   const [seenAssignedIds, setSeenAssignedIds] = useState([]); // tolk: tildelte jeg har “sett”
   const [seenWishIds, setSeenWishIds] = useState([]);         // admin: oppdrag med påmeldte jeg har “sett”
 
   const views = role === 'admin' ? ADMIN_VIEWS : VIEWS;
-  const currentUserId = role === 'tolk' ? 'u2' : 'u1'; // demo-bruker
 
   // --- LES fra localStorage ---
   useEffect(() => {
@@ -83,6 +85,7 @@ export default function Page() {
       if (typeof s.to === 'string') setTo(s.to);
       if (Array.isArray(s.seenAssignedIds)) setSeenAssignedIds(s.seenAssignedIds);
       if (Array.isArray(s.seenWishIds)) setSeenWishIds(s.seenWishIds);
+      if (s.currentUserId) setCurrentUserId(s.currentUserId);
     } catch {}
   }, []);
 
@@ -103,14 +106,28 @@ export default function Page() {
   }, []);
   useEffect(() => { load(); }, [load]);
 
+  // Sett en fornuftig default-to lk når lista endres
+  useEffect(() => {
+    if (role !== 'tolk') return;
+    const tolker = (interpreters || []).filter(u => u.role === 'tolk');
+    if (tolker.length && !tolker.some(u => u.id === currentUserId)) {
+      setCurrentUserId(tolker[0].id);
+    }
+  }, [role, interpreters, currentUserId]);
+
+  // Nullstill ulest-merker for tildelte når du bytter “innlogget” tolk
+  useEffect(() => {
+    if (role === 'tolk') setSeenAssignedIds([]);
+  }, [currentUserId, role]);
+
   // --- LAGRE til localStorage ---
   useEffect(() => {
     if (typeof window === 'undefined') return;
     try {
-      const s = { role, view, query, typeFilter, sortBy, from, to, seenAssignedIds, seenWishIds };
+      const s = { role, view, query, typeFilter, sortBy, from, to, seenAssignedIds, seenWishIds, currentUserId };
       localStorage.setItem(STORAGE_KEY, JSON.stringify(s));
     } catch {}
-  }, [role, view, query, typeFilter, sortBy, from, to, seenAssignedIds, seenWishIds]);
+  }, [role, view, query, typeFilter, sortBy, from, to, seenAssignedIds, seenWishIds, currentUserId]);
 
   // Avledet data
   const dynamicTypes = useMemo(() => {
@@ -357,6 +374,25 @@ export default function Page() {
           >
             admin
           </button>
+
+          {/* Når rolle = tolk: velg hvilken tolk du ser som (demo) */}
+          {role === 'tolk' && (
+            <>
+              <span className="text-sm">Bruker:</span>
+              <select
+                value={currentUserId}
+                onChange={(e) => setCurrentUserId(e.target.value)}
+                className="border rounded px-2 py-1 text-sm bg-white"
+                title="Velg hvilken tolk du ser som"
+              >
+                {(interpreters || []).filter(u => u.role === 'tolk').map(u => (
+                  <option key={u.id} value={u.id}>
+                    {u.name} ({u.id})
+                  </option>
+                ))}
+              </select>
+            </>
+          )}
         </div>
       </div>
 
