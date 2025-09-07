@@ -39,7 +39,9 @@ function baseHonorarNOK(a, userId) {
   const fixed = a?.honorarFixed?.[userId];
   if (typeof fixed === 'number') return fixed;
 
-  const rate = typeof a?.honorarRateNOK === 'number' ? a.honorarRateNOK : 0;
+  const DEFAULT_RATE_NOK = 650; // fallback hvis oppdraget ikke har honorarRateNOK
+
+  const rate = typeof a?.honorarRateNOK === 'number' ? a.honorarRateNOK : DEFAULT_RATE_NOK;
   if (!a?.startISO) return 0;
   const start = new Date(a.startISO);
   const end   = a?.endISO ? new Date(a.endISO) : null;
@@ -455,6 +457,7 @@ export default function Page() {
 // --- Komponent: HonorarVisning -----------------------------------------
 function HonorarPanel() {
   const [ym, setYm] = useState(() => {
+    const [payOverrides, setPayOverrides] = useState(() => readPayOverrides());
     const d = new Date();
     // default: denne måneden (YYYY-MM)
     return `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}`;
@@ -464,53 +467,47 @@ function HonorarPanel() {
   const [adminUserId, setAdminUserId] = useState(() => (interpreters.find(u=>u.role==='tolk')?.id || ''));
   const targetUserId = role === 'admin' ? adminUserId : currentUserId;
 
-  const [rows, total, overrides] = useMemo(() => {
-    const [y, m] = ym.split('-').map(Number);
-    const { rows, total, overrides } = calcMonthlyHonorar(assignments, targetUserId, y, m);
-    return [rows, total, overrides];
-  }, [assignments, targetUserId, ym]);
+  const [rows, total] = useMemo(() => {
+  const [y, m] = ym.split('-').map(Number);
+  const { startISO, endISO } = monthRangeISO(y, m);
 
-  const setExtra = useCallback((assignmentId, userId, val) => {
-    const obj = { ...overrides };
-    if (!obj[assignmentId]) obj[assignmentId] = {};
-    if (!obj[assignmentId][userId]) obj[assignmentId][userId] = {};
-    obj[assignmentId][userId].extraNOK = Number(val) || 0;
-    writePayOverrides(obj);
-  }, [overrides]);
+  const out = [];
+  let sumTotal = 0;
 
-  const setNote = useCallback((assignmentId, userId, note) => {
-    const obj = { ...overrides };
-    if (!obj[assignmentId]) obj[assignmentId] = {};
-    if (!obj[assignmentId][userId]) obj[assignmentId][userId] = {};
-    obj[assignmentId][userId].note = note || '';
-    writePayOverrides(obj);
-  }, [overrides]);
+  for (const a of assignments || []) {
+    if (!isWithin(a?.startISO, startISO, endISO)) continue;
+    const res = calcHonorarForAssignment(a, targetUserId, payOverrides);
+    if (res.total > 0 || res.reason !== 'not_assigned') {
+      out.push({ a, base: res.base, extra: res.extra, sum: res.total, reason: res.reason });
+      sumTotal += res.total;
+    }
+  }
+  return [out, sumTotal];
+}, [assignments, targetUserId, ym, payOverrides]);
 
-  return (
-    <section className="mt-4">
-      <div className="flex flex-wrap items-center gap-2 mb-3">
-        <label className="text-sm opacity-70">Måned:</label>
-        <input
-          type="month"
-          value={ym}
-          onChange={(e)=>setYm(e.target.value)}
-          className="border rounded px-2 py-1 text-sm bg-white"
-        />
 
-        {role === 'admin' && (
-          <>
-            <label className="text-sm opacity-70 ml-2">Tolk:</label>
-            <select
-              value={adminUserId}
-              onChange={(e)=>setAdminUserId(e.target.value)}
-              className="border rounded px-2 py-1 text-sm bg-white"
-            >
-              {interpreters.filter(u=>u.role==='tolk').map(u=>(
-                <option key={u.id} value={u.id}>{u.name} ({u.id})</option>
-              ))}
-            </select>
-          </>
-        )}
+const setExtra = useCallback((assignmentId, userId, val) => {
+  setPayOverrides(prev => {
+    const next = { ...prev };
+    next[assignmentId] = { ...(prev[assignmentId] || {}) };
+    next[assignmentId][userId] = { ...(prev[assignmentId]?.[userId] || {}) };
+    next[assignmentId][userId].extraNOK = Number(val) || 0;
+    writePayOverrides(next);
+    return next;
+  });
+}, []);
+
+const setNote = useCallback((assignmentId, userId, note) => {
+  setPayOverrides(prev => {
+    const next = { ...prev };
+    next[assignmentId] = { ...(prev[assignmentId] || {}) };
+    next[assignmentId][userId] = { ...(prev[assignmentId]?.[userId] || {}) };
+    next[assignmentId][userId].note = note || '';
+    writePayOverrides(next);
+    return next;
+  });
+}, []);
+
 
         <div className="ml-auto text-lg font-semibold">
           Sum: {new Intl.NumberFormat('no-NO').format(total)} kr
@@ -535,7 +532,7 @@ function HonorarPanel() {
             </thead>
             <tbody>
               {rows.map(({ a, base, extra, sum, reason }) => {
-                const o = (overrides?.[a.id]?.[targetUserId]) || {};
+                const o = (payOverrides?.[a.id]?.[targetUserId]) || {};
                 return (
                   <tr key={a.id} className="border-b">
                     <td className="p-2 whitespace-nowrap">
@@ -551,15 +548,17 @@ function HonorarPanel() {
                     </td>
                     <td className="p-2 text-right tabular-nums">{base.toLocaleString('no-NO')} kr</td>
                     <td className="p-2 text-right">
-                      <input
-                        type="number"
-                        step="1"
-                        className="w-28 border rounded px-2 py-1 text-right"
-                        value={o.extraNOK ?? 0}
-                        onChange={(e)=>setExtra(a.id, targetUserId, e.target.value)}
-                        title="Manuell justering (overtid, tillegg, fratrekk)"
-                      />
-                    </td>
+  <input
+    type="number"
+    step="1"
+    className="w-28 border rounded px-2 py-1 text-right disabled:opacity-60"
+    value={o.extraNOK ?? 0}
+    onChange={(e)=>setExtra(a.id, targetUserId, e.target.value)}
+    title={role !== 'admin' ? 'Kun admin kan justere' : 'Manuell justering (overtid, tillegg, fratrekk)'}
+    disabled={role !== 'admin'}
+  />
+</td>
+
                     <td className="p-2 text-right font-semibold tabular-nums">{sum.toLocaleString('no-NO')} kr</td>
                     <td className="p-2">
                       <input
