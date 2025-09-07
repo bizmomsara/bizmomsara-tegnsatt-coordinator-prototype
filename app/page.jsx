@@ -36,27 +36,27 @@ const UI_STATUS = {
 
 const STORAGE_KEY = 'tegnsatt-ui-v1';
 
+// ————————————————————————————————————————
+// Skjult tildeling: helpers
+// ————————————————————————————————————————
 const REVEAL_THRESHOLD = 2; // vis navn når minst 2 er tildelt
 
-function canUserSeeAssigneeNames({ role, meId }, assignment) {
-  const assignees = assignment.assignees ?? []; // [{id, name}, ...]
-  const meAssigned = assignees.some(a => a.id === meId);
-
+function canUserSeeAssigneeNamesIds({ role, meId }, assignment) {
+  const ids = assignment.assignedIds ?? [];
+  const meAssigned = ids.includes(meId);
   if (role === 'admin') return true;
-  if (!meAssigned) return false;            // ikke tildelt -> ser ingen navn
-  return assignees.length >= REVEAL_THRESHOLD; // tildelt, men vis først når to+
+  if (!meAssigned) return false;                 // ikke tildelt -> ser ingen navn
+  return ids.length >= REVEAL_THRESHOLD;         // tildelt, men vis først når to+
 }
 
-function visibleAssignees({ role, meId }, assignment) {
-  const assignees = assignment.assignees ?? [];
-  const seeNames = canUserSeeAssigneeNames({ role, meId }, assignment);
+function visibleAssignedForMe({ role, meId }, assignment) {
+  const ids = assignment.assignedIds ?? [];
+  const canSee = canUserSeeAssigneeNamesIds({ role, meId }, assignment);
 
-  if (!seeNames) {
-    // Hvis jeg er tildelt men alene, vis “Du” kun til meg (ikke navn på andre).
-    const me = assignees.find(a => a.id === meId);
-    return me ? [{ id: meId, name: 'Du' }] : [];
-  }
-  return assignees;
+  if (role === 'admin') return ids;              // admin ser alltid navn
+  if (!ids.includes(meId)) return [];            // ikke tildelt -> ingen navn
+  if (!canSee) return ['__ME__'];                // alene tildelt -> bare “Du”
+  return ids;                                    // to+ tildelt -> alle navn
 }
 
 // Små UI-hjelpere
@@ -129,7 +129,7 @@ export default function Page() {
   }, []);
   useEffect(() => { load(); }, [load]);
 
-  // Sett en fornuftig default-to lk når lista endres
+  // Sett en fornuftig default-tolk når lista endres
   useEffect(() => {
     if (role !== 'tolk') return;
     const tolker = (interpreters || []).filter(u => u.role === 'tolk');
@@ -542,21 +542,21 @@ export default function Page() {
                       <div><span className="font-medium">Notater:</span> {a?.notes || '—'}</div>
                     </div>
 
-                    {/* Påmeldte tolker (admin kan tildele) */}
-                    <div className="text-sm">
-                      <div className="font-medium mb-1">Påmeldte tolker</div>
-                      {((a.wishIds || []).filter(id => !(a.assignedIds || []).includes(id))).length === 0 ? (
-                        <div className="opacity-70">Ingen påmeldinger.</div>
-                      ) : (
-                        <ul className="list-disc ml-5">
-                          {(a.wishIds || [])
-                            .filter(id => !(a.assignedIds || []).includes(id)) // vis kun ikke-tildelte
-                            .map((id) => {
-                              const alreadyAssigned = (a.assignedIds || []).includes(id);
-                              return (
-                                <li key={id} className="flex items-center gap-2">
-                                  <span>{displayName(id)}</span>
-                                  {role === 'admin' && (
+                    {/* Påmeldte tolker (kun admin ser denne) */}
+                    {role === 'admin' && (
+                      <div className="text-sm">
+                        <div className="font-medium mb-1">Påmeldte tolker</div>
+                        {((a.wishIds || []).filter(id => !(a.assignedIds || []).includes(id))).length === 0 ? (
+                          <div className="opacity-70">Ingen påmeldinger.</div>
+                        ) : (
+                          <ul className="list-disc ml-5">
+                            {(a.wishIds || [])
+                              .filter(id => !(a.assignedIds || []).includes(id)) // vis kun ikke-tildelte
+                              .map((id) => {
+                                const alreadyAssigned = (a.assignedIds || []).includes(id);
+                                return (
+                                  <li key={id} className="flex items-center gap-2">
+                                    <span>{displayName(id)}</span>
                                     <button
                                       className="ml-auto px-2 py-1 rounded border text-xs"
                                       onClick={() => assignUser(a, id)}
@@ -565,37 +565,74 @@ export default function Page() {
                                     >
                                       {busyId === a.id ? 'Tildeler…' : 'Tildel'}
                                     </button>
-                                  )}
-                                </li>
-                              );
-                            })}
-                        </ul>
-                      )}
-                    </div>
+                                  </li>
+                                );
+                              })}
+                          </ul>
+                        )}
+                      </div>
+                    )}
 
-                    {/* Tildelte tolker (admin kan fjerne) */}
+                    {/* Tildelte tolker (admin kan fjerne, tolker ser skjult etter reglene) */}
                     <div className="text-sm">
                       <div className="font-medium mb-1">Tildelte tolker</div>
-                      {(a?.assignedIds?.length ?? 0) === 0 ? (
-                        <div className="opacity-70">Ingen tildelt ennå.</div>
-                      ) : (
-                        <ul className="list-disc ml-5">
-                          {a.assignedIds.map((id) => (
-                            <li key={id} className="flex items-center gap-2">
-                              <span>{displayName(id)}</span>
-                              {role === 'admin' && (
-                                <button
-                                  className="ml-auto px-2 py-1 rounded border text-xs"
-                                  onClick={() => unassignUser(a, id)}
-                                  disabled={busyId === a.id}
-                                >
-                                  {busyId === a.id ? 'Fjerner…' : 'Fjern'}
-                                </button>
-                              )}
-                            </li>
-                          ))}
-                        </ul>
-                      )}
+                      {(() => {
+                        const assignedIds = a.assignedIds || [];
+                        const count = assignedIds.length;
+                        const ctx = { role, meId: currentUserId };
+                        const canSee = canUserSeeAssigneeNamesIds(ctx, a);
+                        const visible = visibleAssignedForMe(ctx, a); // kan være ['__ME__'] eller de faktiske ID-ene
+
+                        if (count === 0) {
+                          return <div className="opacity-70">Ingen tildelt ennå.</div>;
+                        }
+
+                        // ADMIN: vis alle navn + fjern-knapp
+                        if (role === 'admin') {
+                          return (
+                            <ul className="list-disc ml-5">
+                              {assignedIds.map((id) => (
+                                <li key={id} className="flex items-center gap-2">
+                                  <span>{displayName(id)}</span>
+                                  <button
+                                    className="ml-auto px-2 py-1 rounded border text-xs"
+                                    onClick={() => unassignUser(a, id)}
+                                    disabled={busyId === a.id}
+                                  >
+                                    {busyId === a.id ? 'Fjerner…' : 'Fjern'}
+                                  </button>
+                                </li>
+                              ))}
+                            </ul>
+                          );
+                        }
+
+                        // TOLK: ikke tildelt -> vis kun teller uten navn
+                        if (role === 'tolk' && !assignedIds.includes(currentUserId)) {
+                          return <div className="opacity-70">{count} tildelt</div>;
+                        }
+
+                        // TOLK: jeg er tildelt
+                        if (!canSee) {
+                          // Alene tildelt: kun “Du”
+                          return (
+                            <ul className="list-disc ml-5">
+                              {visible.includes('__ME__') && <li key="me">Du</li>}
+                            </ul>
+                          );
+                        }
+
+                        // TOLK: to+ tildelt -> vis begge navn (jeg ser de andre, de ser meg)
+                        return (
+                          <ul className="list-disc ml-5">
+                            {assignedIds.map((id) => (
+                              <li key={id}>
+                                {id === currentUserId ? 'Du' : displayName(id)}
+                              </li>
+                            ))}
+                          </ul>
+                        );
+                      })()}
                     </div>
 
                     {/* Tolke-handling */}
