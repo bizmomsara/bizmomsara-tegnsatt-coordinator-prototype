@@ -124,13 +124,15 @@ function calcMonthlyHonorar(assignments, userId, year, month) {
 const VIEWS = [
   { id: 'ledige',        label: 'Ledige' },
   { id: 'mine-ønsker',   label: 'Mine ønsker' },
-  { id: 'mine-tildelte', label: 'Tildelte' },
+  { id: 'mine-tildelte', label: 'Tildelte' }, 
+  { id: 'honorar',       label: 'Honorar' },
 ];
 
 const ADMIN_VIEWS = [
   { id: 'ledige',        label: 'Ledige' },
   { id: 'mine-ønsker',   label: 'Påmeldte' },
   { id: 'mine-tildelte', label: 'Tildelte' },
+  { id: 'honorar',       label: 'Honorar' },
 ];
 
 // UI-statuschips (kun visuelt)
