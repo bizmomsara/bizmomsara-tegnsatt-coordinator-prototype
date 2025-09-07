@@ -11,6 +11,115 @@ import {
   unassignInterpreter,
 } from '../lib/mockApi';
 
+// --- Honorar: domene-regler og kalkulasjon -----------------------------
+
+// Nøkkel for lokale justeringer (lagres pr. assignmentId+tolkId)
+const PAY_LOCAL_KEY = 'tegnsatt-payoverrides-v1';
+
+// Hjelper: les/skriv lokale justeringer
+function readPayOverrides() {
+  try { return JSON.parse(localStorage.getItem(PAY_LOCAL_KEY) || '{}'); } catch { return {}; }
+}
+function writePayOverrides(obj) {
+  try { localStorage.setItem(PAY_LOCAL_KEY, JSON.stringify(obj)); } catch {}
+}
+
+/**
+ * Pluggbar “policy” for grunnlag:
+ * - Bruk fast honorar hvis definert på oppdraget for tolken
+ * - Ellers timepris * antall timer (avrundet til nærmeste kvarter oppover)
+ *
+ * Felter du kan legge til på assignment-objektet (mockApi):
+ * - honorarFixed?: Record<userId, number>   // fast honorar per tolk på dette oppdraget
+ * - honorarRateNOK?: number                 // standard timepris for tolk (fallback)
+ * - cancelledBy?: 'interpreter'|'customer'  // hvem avlyste
+ * - cancelledAt?: string (ISO)              // når ble avlyst
+ */
+function baseHonorarNOK(a, userId) {
+  const fixed = a?.honorarFixed?.[userId];
+  if (typeof fixed === 'number') return fixed;
+
+  const rate = typeof a?.honorarRateNOK === 'number' ? a.honorarRateNOK : 0;
+  if (!a?.startISO) return 0;
+  const start = new Date(a.startISO);
+  const end   = a?.endISO ? new Date(a.endISO) : null;
+  if (!end) return 0;
+
+  const ms = end - start;
+  const hours = Math.max(ms / (1000*60*60), 0);
+
+  // Avrund opp til nærmeste 0.25 time (15 min)
+  const rounded = Math.ceil(hours * 4) / 4;
+  return Math.round(rounded * rate);
+}
+
+// 14-dagersregelen: tolken får 0 hvis tolken selv avlyser <14 dager før start
+function isNoPayDueToLateCancelByInterpreter(a) {
+  if (a?.cancelledBy !== 'interpreter' || !a?.cancelledAt || !a?.startISO) return false;
+  const cancelled = new Date(a.cancelledAt);
+  const start = new Date(a.startISO);
+  const diffDays = (start - cancelled) / (1000*60*60*24);
+  return diffDays < 14;
+}
+
+/**
+ * Kalkuler honorar for én tolk på ett oppdrag,
+ * inkl. lokale (manuelle) justeringer.
+ *
+ * Overrides-struktur (lagres i localStorage):
+ *   { [assignmentId]: { [userId]: { extraNOK?: number, note?: string } } }
+ */
+function calcHonorarForAssignment(a, userId, overrides) {
+  // Ikke regn noe hvis tolken ikke er tildelt
+  const assigned = Array.isArray(a?.assignedIds) && a.assignedIds.includes(userId);
+  if (!assigned) return { base: 0, extra: 0, total: 0, reason: 'not_assigned' };
+
+  // Avlyst av tolken <14 dager -> 0
+  if (isNoPayDueToLateCancelByInterpreter(a)) {
+    const extra = (overrides?.[a.id]?.[userId]?.extraNOK) ?? 0; // lar deg likevel “overstyre” manuelt
+    return { base: 0, extra, total: Math.max(0, 0 + extra), reason: 'late_cancel_by_interpreter' };
+  }
+
+  // Vanlig beregning
+  const base = baseHonorarNOK(a, userId);
+  const extra = (overrides?.[a.id]?.[userId]?.extraNOK) ?? 0;
+  return { base, extra, total: Math.max(0, base + extra), reason: 'ok' };
+}
+
+function monthRangeISO(year, month /* 1-12 */) {
+  const start = new Date(Date.UTC(year, month-1, 1, 0, 0, 0));
+  const end   = new Date(Date.UTC(year, month, 0, 23, 59, 59)); // siste dag i mnd
+  return { startISO: start.toISOString(), endISO: end.toISOString() };
+}
+
+function isWithin(iso, startISO, endISO) {
+  if (!iso) return false;
+  const t = new Date(iso).toISOString();
+  return t >= startISO && t <= endISO;
+}
+
+/**
+ * Summer honorar for en tolk i valgt måned (1.–31.).
+ * Tar med alle oppdrag der startISO faller i måneden.
+ */
+function calcMonthlyHonorar(assignments, userId, year, month) {
+  const { startISO, endISO } = monthRangeISO(year, month);
+  const overrides = readPayOverrides();
+
+  const rows = [];
+  let total = 0;
+
+  for (const a of assignments || []) {
+    if (!isWithin(a?.startISO, startISO, endISO)) continue;
+    const { base, extra, total: sum, reason } = calcHonorarForAssignment(a, userId, overrides);
+    if (sum > 0 || reason !== 'not_assigned') {
+      rows.push({ a, base, extra, sum, reason });
+      total += sum;
+    }
+  }
+  return { rows, total, overrides };
+}
+
 // Faner
 const VIEWS = [
   { id: 'ledige',        label: 'Ledige' },
