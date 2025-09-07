@@ -457,57 +457,85 @@ export default function Page() {
 // --- Komponent: HonorarVisning -----------------------------------------
 function HonorarPanel() {
   const [ym, setYm] = useState(() => {
-    const [payOverrides, setPayOverrides] = useState(() => readPayOverrides());
     const d = new Date();
-    // default: denne måneden (YYYY-MM)
-    return `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}`;
+    return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}`;
   });
+
+  const [payOverrides, setPayOverrides] = useState(() => readPayOverrides());
 
   // Admin kan velge tolk; tolk ser seg selv
-  const [adminUserId, setAdminUserId] = useState(() => (interpreters.find(u=>u.role==='tolk')?.id || ''));
+  const [adminUserId, setAdminUserId] = useState(() => (
+    (interpreters || []).find(u => u.role === 'tolk')?.id || ''
+  ));
   const targetUserId = role === 'admin' ? adminUserId : currentUserId;
 
+  // Regn ut rader + sum for valgt måned
   const [rows, total] = useMemo(() => {
-  const [y, m] = ym.split('-').map(Number);
-  const { startISO, endISO } = monthRangeISO(y, m);
+    const [y, m] = ym.split('-').map(Number);
+    const { startISO, endISO } = monthRangeISO(y, m);
 
-  const out = [];
-  let sumTotal = 0;
+    const out = [];
+    let sumTotal = 0;
 
-  for (const a of assignments || []) {
-    if (!isWithin(a?.startISO, startISO, endISO)) continue;
-    const res = calcHonorarForAssignment(a, targetUserId, payOverrides);
-    if (res.total > 0 || res.reason !== 'not_assigned') {
-      out.push({ a, base: res.base, extra: res.extra, sum: res.total, reason: res.reason });
-      sumTotal += res.total;
+    for (const a of assignments || []) {
+      if (!isWithin(a?.startISO, startISO, endISO)) continue;
+      const { base, extra, total: s, reason } = calcHonorarForAssignment(a, targetUserId, payOverrides);
+      if (s > 0 || reason !== 'not_assigned') {
+        out.push({ a, base, extra, sum: s, reason });
+        sumTotal += s;
+      }
     }
-  }
-  return [out, sumTotal];
-}, [assignments, targetUserId, ym, payOverrides]);
+    return [out, sumTotal];
+  }, [assignments, targetUserId, ym, payOverrides]);
 
+  // Lagre justering/notat i state + localStorage
+  const setExtra = useCallback((assignmentId, userId, val) => {
+    setPayOverrides(prev => {
+      const next = { ...prev };
+      if (!next[assignmentId]) next[assignmentId] = {};
+      if (!next[assignmentId][userId]) next[assignmentId][userId] = {};
+      next[assignmentId][userId].extraNOK = Number(val) || 0;
+      writePayOverrides(next);
+      return next;
+    });
+  }, []);
 
-const setExtra = useCallback((assignmentId, userId, val) => {
-  setPayOverrides(prev => {
-    const next = { ...prev };
-    next[assignmentId] = { ...(prev[assignmentId] || {}) };
-    next[assignmentId][userId] = { ...(prev[assignmentId]?.[userId] || {}) };
-    next[assignmentId][userId].extraNOK = Number(val) || 0;
-    writePayOverrides(next);
-    return next;
-  });
-}, []);
+  const setNote = useCallback((assignmentId, userId, note) => {
+    setPayOverrides(prev => {
+      const next = { ...prev };
+      if (!next[assignmentId]) next[assignmentId] = {};
+      if (!next[assignmentId][userId]) next[assignmentId][userId] = {};
+      next[assignmentId][userId].note = note || '';
+      writePayOverrides(next);
+      return next;
+    });
+  }, []);
 
-const setNote = useCallback((assignmentId, userId, note) => {
-  setPayOverrides(prev => {
-    const next = { ...prev };
-    next[assignmentId] = { ...(prev[assignmentId] || {}) };
-    next[assignmentId][userId] = { ...(prev[assignmentId]?.[userId] || {}) };
-    next[assignmentId][userId].note = note || '';
-    writePayOverrides(next);
-    return next;
-  });
-}, []);
+  return (
+    <section className="mt-4">
+      <div className="flex flex-wrap items-center gap-2 mb-3">
+        <label className="text-sm opacity-70">Måned:</label>
+        <input
+          type="month"
+          value={ym}
+          onChange={(e) => setYm(e.target.value)}
+          className="border rounded px-2 py-1 text-sm bg-white"
+        />
 
+        {role === 'admin' && (
+          <>
+            <label className="text-sm opacity-70 ml-2">Tolk:</label>
+            <select
+              value={adminUserId}
+              onChange={(e) => setAdminUserId(e.target.value)}
+              className="border rounded px-2 py-1 text-sm bg-white"
+            >
+              {(interpreters || []).filter(u => u.role === 'tolk').map(u => (
+                <option key={u.id} value={u.id}>{u.name} ({u.id})</option>
+              ))}
+            </select>
+          </>
+        )}
 
         <div className="ml-auto text-lg font-semibold">
           Sum: {new Intl.NumberFormat('no-NO').format(total)} kr
@@ -531,15 +559,15 @@ const setNote = useCallback((assignmentId, userId, note) => {
               </tr>
             </thead>
             <tbody>
-              {rows.map(({ a, base, extra, sum, reason }) => {
+              {rows.map(({ a, base, sum, reason }) => {
                 const o = (payOverrides?.[a.id]?.[targetUserId]) || {};
                 return (
                   <tr key={a.id} className="border-b">
                     <td className="p-2 whitespace-nowrap">
                       {new Date(a.startISO).toLocaleDateString('no-NO')}
                       <div className="opacity-70">
-                        {new Date(a.startISO).toLocaleTimeString('no-NO', {hour:'2-digit', minute:'2-digit'})}
-                        {a.endISO ? '–'+new Date(a.endISO).toLocaleTimeString('no-NO',{hour:'2-digit',minute:'2-digit'}) : ''}
+                        {new Date(a.startISO).toLocaleTimeString('no-NO', { hour: '2-digit', minute: '2-digit' })}
+                        {a.endISO ? '–' + new Date(a.endISO).toLocaleTimeString('no-NO', { hour: '2-digit', minute: '2-digit' }) : ''}
                       </div>
                     </td>
                     <td className="p-2">
@@ -548,26 +576,26 @@ const setNote = useCallback((assignmentId, userId, note) => {
                     </td>
                     <td className="p-2 text-right tabular-nums">{base.toLocaleString('no-NO')} kr</td>
                     <td className="p-2 text-right">
-  <input
-    type="number"
-    step="1"
-    className="w-28 border rounded px-2 py-1 text-right disabled:opacity-60"
-    value={o.extraNOK ?? 0}
-    onChange={(e)=>setExtra(a.id, targetUserId, e.target.value)}
-    title={role !== 'admin' ? 'Kun admin kan justere' : 'Manuell justering (overtid, tillegg, fratrekk)'}
-    disabled={role !== 'admin'}
-  />
-</td>
-
+                      <input
+                        type="number"
+                        step="1"
+                        className="w-28 border rounded px-2 py-1 text-right disabled:opacity-60"
+                        value={o.extraNOK ?? 0}
+                        onChange={(e) => setExtra(a.id, targetUserId, e.target.value)}
+                        title={role !== 'admin' ? 'Kun admin kan justere' : 'Manuell justering (overtid, tillegg, fratrekk)'}
+                        disabled={role !== 'admin'}
+                      />
+                    </td>
                     <td className="p-2 text-right font-semibold tabular-nums">{sum.toLocaleString('no-NO')} kr</td>
                     <td className="p-2">
                       <input
-  type="text"
-  className="w-full border rounded px-2 py-1"
-  value={o.note ?? ''}
-  onChange={(e)=>setNote(a.id, targetUserId, e.target.value)}
-  placeholder="Årsak (overtid, reise, etc.)"
-/>
+                        type="text"
+                        className="w-full border rounded px-2 py-1"
+                        value={o.note ?? ''}
+                        onChange={(e) => setNote(a.id, targetUserId, e.target.value)}
+                        placeholder="Årsak (avlyst ved oppmøte, +25 min, reise, osv.)"
+                      />
+                    </td>
                     <td className="p-2">
                       {reason === 'late_cancel_by_interpreter' ? (
                         <span className="px-2 py-0.5 rounded-full border bg-yellow-50 text-yellow-800">
@@ -596,6 +624,7 @@ const setNote = useCallback((assignmentId, userId, note) => {
     </section>
   );
 }
+
   
   // RENDER
   if (loading) {
