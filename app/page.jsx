@@ -738,193 +738,192 @@ function HonorarPanel() {
         </div>
       </div>
 
-      {/* Treff-teller */}
-      <div className="mb-2 text-sm opacity-70">{displayed.length} treff</div>
+{/* Honorar-fanen ELLER standardliste */}
+{view === 'honorar' ? (
+  <HonorarPanel />
+) : (
+  <>
+    {/* Treff-teller */}
+    <div className="mb-2 text-sm opacity-70">{displayed.length} treff</div>
 
-      {/* Liste */}
-      {displayed.length === 0 ? (
-        <div className="opacity-70">Ingen treff.</div>
-      ) : (
-        <ul className="space-y-3">
-          {displayed.map((a) => {
-            const wishCount = a?.wishIds?.length ?? 0;
-            const assignedCount = a?.assignedIds?.length ?? 0;
-            const isFull = assignedCount >= (a?.slots ?? 0);
-            const myWish = Array.isArray(a?.wishIds) && a.wishIds.includes(currentUserId);
-            const isAssignedToMe = Array.isArray(a?.assignedIds) && a.assignedIds.includes(currentUserId);
+    {/* Liste */}
+    {displayed.length === 0 ? (
+      <div className="opacity-70">Ingen treff.</div>
+    ) : (
+      <ul className="space-y-3">
+        {displayed.map((a) => {
+          const wishCount = a?.wishIds?.length ?? 0;
+          const assignedCount = a?.assignedIds?.length ?? 0;
+          const isFull = assignedCount >= (a?.slots ?? 0);
+          const myWish = Array.isArray(a?.wishIds) && a.wishIds.includes(currentUserId);
+          const isAssignedToMe = Array.isArray(a?.assignedIds) && a.assignedIds.includes(currentUserId);
 
-            return (
-              <li key={a.id} className="border rounded-xl bg-white">
-                <button
-                  type="button"
-                  onClick={() => setOpenId((id) => (id === a.id ? null : a.id))}
-                  className="w-full text-left p-4 rounded-xl focus:outline-none focus:ring-2 focus:ring-offset-2 cursor-pointer"
-                >
-                  <div className="flex items-center justify-between">
-                    <div>
-                      <div className="font-medium">{a?.title}</div>
-                      <div className="text-sm opacity-70">
-                        {a?.customer} — {formatRange(a?.startISO, a?.endISO)}
-                      </div>
-                      <div className="text-sm opacity-70">{a?.location}</div>
+          return (
+            <li key={a.id} className="border rounded-xl bg-white">
+              <button
+                type="button"
+                onClick={() => setOpenId((id) => (id === a.id ? null : a.id))}
+                className="w-full text-left p-4 rounded-xl focus:outline-none focus:ring-2 focus:ring-offset-2 cursor-pointer"
+              >
+                <div className="flex items-center justify-between">
+                  <div>
+                    <div className="font-medium">{a?.title}</div>
+                    <div className="text-sm opacity-70">
+                      {a?.customer} — {formatRange(a?.startISO, a?.endISO)}
                     </div>
-
-                    <div className="flex items-center gap-2">
-                      {a?.type && (
-                        <span className="text-sm px-2 py-1 rounded-full border">{a.type}</span>
-                      )}
-                      <span className="text-sm px-2 py-1 rounded-full border" title="tildelte / slots">
-                        {assignedCount}/{a?.slots ?? 0}
-                      </span>
-                      {role === 'admin' && wishCount > 0 && (
-                        <span className="text-sm px-2 py-1 rounded-full border bg-blue-50 text-blue-700 border-blue-200">
-                          {wishCount} påmeldt{wishCount === 1 ? '' : 'e'}
-                        </span>
-                      )}
-                      {UI_STATUS[a?.status] && (
-                        <span className={`text-sm px-2 py-1 rounded-full border ${UI_STATUS[a.status].className}`}>
-                          {UI_STATUS[a.status].label}
-                        </span>
-                      )}
-                    </div>
+                    <div className="text-sm opacity-70">{a?.location}</div>
                   </div>
-                </button>
 
-                {openId === a.id && (
-                  <div className="border-t p-4 grid gap-3 md:grid-cols-2">
-                    <div className="text-sm space-y-1">
-                      <div><span className="font-medium">Kunde:</span> {a?.customer}</div>
-                      <div><span className="font-medium">Sted:</span> {a?.location}</div>
-                      <div><span className="font-medium">Tid:</span> {formatRange(a?.startISO, a?.endISO)}</div>
-                      <div><span className="font-medium">Type:</span> {a?.type || '—'}</div>
-                      <div><span className="font-medium">Notater:</span> {a?.notes || '—'}</div>
-                    </div>
-
-                    {/* Påmeldte tolker (kun admin ser denne) */}
-                    {role === 'admin' && (
-                      <div className="text-sm">
-                        <div className="font-medium mb-1">Påmeldte tolker</div>
-                        {((a.wishIds || []).filter(id => !(a.assignedIds || []).includes(id))).length === 0 ? (
-                          <div className="opacity-70">Ingen påmeldinger.</div>
-                        ) : (
-                          <ul className="list-disc ml-5">
-                            {(a.wishIds || [])
-                              .filter(id => !(a.assignedIds || []).includes(id)) // vis kun ikke-tildelte
-                              .map((id) => {
-                                const alreadyAssigned = (a.assignedIds || []).includes(id);
-                                return (
-                                  <li key={id} className="flex items-center gap-2">
-                                    <span>{displayName(id)}</span>
-                                    <button
-                                      className="ml-auto px-2 py-1 rounded border text-xs"
-                                      onClick={() => assignUser(a, id)}
-                                      disabled={isFull || alreadyAssigned || busyId === a.id}
-                                      title={isFull ? 'Alle plasser er fylt' : (alreadyAssigned ? 'Allerede tildelt' : '')}
-                                    >
-                                      {busyId === a.id ? 'Tildeler…' : 'Tildel'}
-                                    </button>
-                                  </li>
-                                );
-                              })}
-                          </ul>
-                        )}
-                      </div>
+                  <div className="flex items-center gap-2">
+                    {a?.type && (
+                      <span className="text-sm px-2 py-1 rounded-full border">{a.type}</span>
                     )}
+                    <span className="text-sm px-2 py-1 rounded-full border" title="tildelte / slots">
+                      {assignedCount}/{a?.slots ?? 0}
+                    </span>
+                    {role === 'admin' && wishCount > 0 && (
+                      <span className="text-sm px-2 py-1 rounded-full border bg-blue-50 text-blue-700 border-blue-200">
+                        {wishCount} påmeldt{wishCount === 1 ? '' : 'e'}
+                      </span>
+                    )}
+                    {UI_STATUS[a?.status] && (
+                      <span className={`text-sm px-2 py-1 rounded-full border ${UI_STATUS[a.status].className}`}>
+                        {UI_STATUS[a.status].label}
+                      </span>
+                    )}
+                  </div>
+                </div>
+              </button>
 
-                    {/* Tildelte tolker (admin kan fjerne, tolker ser skjult etter reglene) */}
+              {openId === a.id && (
+                <div className="border-t p-4 grid gap-3 md:grid-cols-2">
+                  <div className="text-sm space-y-1">
+                    <div><span className="font-medium">Kunde:</span> {a?.customer}</div>
+                    <div><span className="font-medium">Sted:</span> {a?.location}</div>
+                    <div><span className="font-medium">Tid:</span> {formatRange(a?.startISO, a?.endISO)}</div>
+                    <div><span className="font-medium">Type:</span> {a?.type || '—'}</div>
+                    <div><span className="font-medium">Notater:</span> {a?.notes || '—'}</div>
+                  </div>
+
+                  {/* Påmeldte tolker (kun admin ser denne) */}
+                  {role === 'admin' && (
                     <div className="text-sm">
-                      <div className="font-medium mb-1">Tildelte tolker</div>
-                      {(() => {
-                        const assignedIds = a.assignedIds || [];
-                        const count = assignedIds.length;
-                        const ctx = { role, meId: currentUserId };
-                        const canSee = canUserSeeAssigneeNamesIds(ctx, a);
-                        const visible = visibleAssignedForMe(ctx, a); // kan være ['__ME__'] eller de faktiske ID-ene
-
-                        if (count === 0) {
-                          return <div className="opacity-70">Ingen tildelt ennå.</div>;
-                        }
-
-                        // ADMIN: vis alle navn + fjern-knapp
-                        if (role === 'admin') {
-                          return (
-                            <ul className="list-disc ml-5">
-                              {assignedIds.map((id) => (
+                      <div className="font-medium mb-1">Påmeldte tolker</div>
+                      {((a.wishIds || []).filter(id => !(a.assignedIds || []).includes(id))).length === 0 ? (
+                        <div className="opacity-70">Ingen påmeldinger.</div>
+                      ) : (
+                        <ul className="list-disc ml-5">
+                          {(a.wishIds || [])
+                            .filter(id => !(a.assignedIds || []).includes(id))
+                            .map((id) => {
+                              const alreadyAssigned = (a.assignedIds || []).includes(id);
+                              return (
                                 <li key={id} className="flex items-center gap-2">
                                   <span>{displayName(id)}</span>
                                   <button
                                     className="ml-auto px-2 py-1 rounded border text-xs"
-                                    onClick={() => unassignUser(a, id)}
-                                    disabled={busyId === a.id}
+                                    onClick={() => assignUser(a, id)}
+                                    disabled={isFull || alreadyAssigned || busyId === a.id}
+                                    title={isFull ? 'Alle plasser er fylt' : (alreadyAssigned ? 'Allerede tildelt' : '')}
                                   >
-                                    {busyId === a.id ? 'Fjerner…' : 'Fjern'}
+                                    {busyId === a.id ? 'Tildeler…' : 'Tildel'}
                                   </button>
                                 </li>
-                              ))}
-                            </ul>
-                          );
-                        }
+                              );
+                            })}
+                        </ul>
+                      )}
+                    </div>
+                  )}
 
-                        // TOLK: ikke tildelt -> vis kun teller uten navn
-                        if (role === 'tolk' && !assignedIds.includes(currentUserId)) {
-                          return <div className="opacity-70">{count} tildelt</div>;
-                        }
+                  {/* Tildelte tolker (respekterer skjult-visning) */}
+                  <div className="text-sm">
+                    <div className="font-medium mb-1">Tildelte tolker</div>
+                    {(() => {
+                      const assignedIds = a.assignedIds || [];
+                      const count = assignedIds.length;
+                      const ctx = { role, meId: currentUserId };
+                      const canSee = canUserSeeAssigneeNamesIds(ctx, a);
+                      const visible = visibleAssignedForMe(ctx, a);
 
-                        // TOLK: jeg er tildelt
-                        if (!canSee) {
-                          // Alene tildelt: kun “Du”
-                          return (
-                            <ul className="list-disc ml-5">
-                              {visible.includes('__ME__') && <li key="me">Du</li>}
-                            </ul>
-                          );
-                        }
+                      if (count === 0) {
+                        return <div className="opacity-70">Ingen tildelt ennå.</div>;
+                      }
 
-                        // TOLK: to+ tildelt -> vis begge navn (jeg ser de andre, de ser meg)
+                      if (role === 'admin') {
                         return (
                           <ul className="list-disc ml-5">
                             {assignedIds.map((id) => (
-                              <li key={id}>
-                                {id === currentUserId ? 'Du' : displayName(id)}
+                              <li key={id} className="flex items-center gap-2">
+                                <span>{displayName(id)}</span>
+                                <button
+                                  className="ml-auto px-2 py-1 rounded border text-xs"
+                                  onClick={() => unassignUser(a, id)}
+                                  disabled={busyId === a.id}
+                                >
+                                  {busyId === a.id ? 'Fjerner…' : 'Fjern'}
+                                </button>
                               </li>
                             ))}
                           </ul>
                         );
-                      })()}
-                    </div>
+                      }
 
-                    {/* Tolke-handling */}
-                    {role === 'tolk' && (
-                      <div className="md:col-span-2 flex gap-2 pt-2">
-                        {myWish ? (
+                      if (role === 'tolk' && !assignedIds.includes(currentUserId)) {
+                        return <div className="opacity-70">{count} tildelt</div>;
+                      }
+
+                      if (!canSee) {
+                        return (
+                          <ul className="list-disc ml-5">
+                            {visible.includes('__ME__') && <li key="me">Du</li>}
+                          </ul>
+                        );
+                      }
+
+                      return (
+                        <ul className="list-disc ml-5">
+                          {assignedIds.map((id) => (
+                            <li key={id}>
+                              {id === currentUserId ? 'Du' : displayName(id)}
+                            </li>
+                          ))}
+                        </ul>
+                      );
+                    })()}
+                  </div>
+
+                  {/* Tolke-handling */}
+                  {role === 'tolk' && (
+                    <div className="md:col-span-2 flex gap-2 pt-2">
+                      {myWish ? (
+                        <button
+                          className="px-3 py-1 rounded border"
+                          onClick={() => withdrawMe(a)}
+                          disabled={busyId === a.id}
+                        >
+                          {busyId === a.id ? 'Trekker…' : 'Trekk ønske'}
+                        </button>
+                      ) : (
+                        !isAssignedToMe && (
                           <button
                             className="px-3 py-1 rounded border"
-                            onClick={() => withdrawMe(a)}
-                            disabled={busyId === a.id}
+                            onClick={() => applyMe(a)}
+                            disabled={busyId === a.id || isFull}
+                            title={isFull ? 'Alle plasser er fylt' : ''}
                           >
-                            {busyId === a.id ? 'Trekker…' : 'Trekk ønske'}
+                            {busyId === a.id ? 'Sender…' : 'Meld interesse'}
                           </button>
-                        ) : (
-                          !isAssignedToMe && (
-                            <button
-                              className="px-3 py-1 rounded border"
-                              onClick={() => applyMe(a)}
-                              disabled={busyId === a.id || isFull}
-                              title={isFull ? 'Alle plasser er fylt' : ''}
-                            >
-                              {busyId === a.id ? 'Sender…' : 'Meld interesse'}
-                            </button>
-                          )
-                        )}
-                      </div>
-                    )}
-                  </div>
-                )}
-              </li>
-            );
-          })}
-        </ul>
-      )}
-    </main>
-  );
-}
+                        )
+                      )}
+                    </div>
+                  )}
+                </div>
+              )}
+            </li>
+          );
+        })}
+      </ul>
+    )}
+  </>
+)}
