@@ -36,6 +36,29 @@ const UI_STATUS = {
 
 const STORAGE_KEY = 'tegnsatt-ui-v1';
 
+const REVEAL_THRESHOLD = 2; // vis navn når minst 2 er tildelt
+
+function canUserSeeAssigneeNames({ role, meId }, assignment) {
+  const assignees = assignment.assignees ?? []; // [{id, name}, ...]
+  const meAssigned = assignees.some(a => a.id === meId);
+
+  if (role === 'admin') return true;
+  if (!meAssigned) return false;            // ikke tildelt -> ser ingen navn
+  return assignees.length >= REVEAL_THRESHOLD; // tildelt, men vis først når to+
+}
+
+function visibleAssignees({ role, meId }, assignment) {
+  const assignees = assignment.assignees ?? [];
+  const seeNames = canUserSeeAssigneeNames({ role, meId }, assignment);
+
+  if (!seeNames) {
+    // Hvis jeg er tildelt men alene, vis “Du” kun til meg (ikke navn på andre).
+    const me = assignees.find(a => a.id === meId);
+    return me ? [{ id: meId, name: 'Du' }] : [];
+  }
+  return assignees;
+}
+
 // Små UI-hjelpere
 const chipClass = (active, current) =>
   `text-sm px-3 py-1 rounded-full border transition ${active === current ? 'bg-black text-white border-black' : 'bg-white'}`;
