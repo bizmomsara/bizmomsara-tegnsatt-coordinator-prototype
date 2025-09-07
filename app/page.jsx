@@ -562,13 +562,12 @@ const setNote = useCallback((assignmentId, userId, note) => {
                     <td className="p-2 text-right font-semibold tabular-nums">{sum.toLocaleString('no-NO')} kr</td>
                     <td className="p-2">
                       <input
-                        type="text"
-                        className="w-full border rounded px-2 py-1"
-                        value={o.note ?? ''}
-                        onChange={(e)=>setNote(a.id, targetUserId, e.target.value)}
-                        placeholder="Årsak (overtid, reise, etc.)"
-                      />
-                    </td>
+  type="text"
+  className="w-full border rounded px-2 py-1"
+  value={o.note ?? ''}
+  onChange={(e)=>setNote(a.id, targetUserId, e.target.value)}
+  placeholder="Årsak (overtid, reise, etc.)"
+/>
                     <td className="p-2">
                       {reason === 'late_cancel_by_interpreter' ? (
                         <span className="px-2 py-0.5 rounded-full border bg-yellow-50 text-yellow-800">
