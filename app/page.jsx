@@ -452,6 +452,153 @@ export default function Page() {
     }
   }, [load]);
 
+// --- Komponent: HonorarVisning -----------------------------------------
+function HonorarPanel() {
+  const [ym, setYm] = useState(() => {
+    const d = new Date();
+    // default: denne måneden (YYYY-MM)
+    return `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}`;
+  });
+
+  // Admin kan velge tolk; tolk ser seg selv
+  const [adminUserId, setAdminUserId] = useState(() => (interpreters.find(u=>u.role==='tolk')?.id || ''));
+  const targetUserId = role === 'admin' ? adminUserId : currentUserId;
+
+  const [rows, total, overrides] = useMemo(() => {
+    const [y, m] = ym.split('-').map(Number);
+    const { rows, total, overrides } = calcMonthlyHonorar(assignments, targetUserId, y, m);
+    return [rows, total, overrides];
+  }, [assignments, targetUserId, ym]);
+
+  const setExtra = useCallback((assignmentId, userId, val) => {
+    const obj = { ...overrides };
+    if (!obj[assignmentId]) obj[assignmentId] = {};
+    if (!obj[assignmentId][userId]) obj[assignmentId][userId] = {};
+    obj[assignmentId][userId].extraNOK = Number(val) || 0;
+    writePayOverrides(obj);
+  }, [overrides]);
+
+  const setNote = useCallback((assignmentId, userId, note) => {
+    const obj = { ...overrides };
+    if (!obj[assignmentId]) obj[assignmentId] = {};
+    if (!obj[assignmentId][userId]) obj[assignmentId][userId] = {};
+    obj[assignmentId][userId].note = note || '';
+    writePayOverrides(obj);
+  }, [overrides]);
+
+  return (
+    <section className="mt-4">
+      <div className="flex flex-wrap items-center gap-2 mb-3">
+        <label className="text-sm opacity-70">Måned:</label>
+        <input
+          type="month"
+          value={ym}
+          onChange={(e)=>setYm(e.target.value)}
+          className="border rounded px-2 py-1 text-sm bg-white"
+        />
+
+        {role === 'admin' && (
+          <>
+            <label className="text-sm opacity-70 ml-2">Tolk:</label>
+            <select
+              value={adminUserId}
+              onChange={(e)=>setAdminUserId(e.target.value)}
+              className="border rounded px-2 py-1 text-sm bg-white"
+            >
+              {interpreters.filter(u=>u.role==='tolk').map(u=>(
+                <option key={u.id} value={u.id}>{u.name} ({u.id})</option>
+              ))}
+            </select>
+          </>
+        )}
+
+        <div className="ml-auto text-lg font-semibold">
+          Sum: {new Intl.NumberFormat('no-NO').format(total)} kr
+        </div>
+      </div>
+
+      {rows.length === 0 ? (
+        <div className="opacity-70">Ingen relevante oppdrag i valgt måned.</div>
+      ) : (
+        <div className="overflow-x-auto">
+          <table className="w-full text-sm border rounded-lg overflow-hidden">
+            <thead className="bg-gray-50">
+              <tr>
+                <th className="text-left p-2 border-b">Dato/tid</th>
+                <th className="text-left p-2 border-b">Oppdrag</th>
+                <th className="text-right p-2 border-b">Grunnlag</th>
+                <th className="text-right p-2 border-b">Justering</th>
+                <th className="text-right p-2 border-b">Sum</th>
+                <th className="text-left p-2 border-b w-64">Notat</th>
+                <th className="text-left p-2 border-b">Status</th>
+              </tr>
+            </thead>
+            <tbody>
+              {rows.map(({ a, base, extra, sum, reason }) => {
+                const o = (overrides?.[a.id]?.[targetUserId]) || {};
+                return (
+                  <tr key={a.id} className="border-b">
+                    <td className="p-2 whitespace-nowrap">
+                      {new Date(a.startISO).toLocaleDateString('no-NO')}
+                      <div className="opacity-70">
+                        {new Date(a.startISO).toLocaleTimeString('no-NO', {hour:'2-digit', minute:'2-digit'})}
+                        {a.endISO ? '–'+new Date(a.endISO).toLocaleTimeString('no-NO',{hour:'2-digit',minute:'2-digit'}) : ''}
+                      </div>
+                    </td>
+                    <td className="p-2">
+                      <div className="font-medium">{a.title}</div>
+                      <div className="opacity-70">{a.customer} — {a.location}</div>
+                    </td>
+                    <td className="p-2 text-right tabular-nums">{base.toLocaleString('no-NO')} kr</td>
+                    <td className="p-2 text-right">
+                      <input
+                        type="number"
+                        step="1"
+                        className="w-28 border rounded px-2 py-1 text-right"
+                        value={o.extraNOK ?? 0}
+                        onChange={(e)=>setExtra(a.id, targetUserId, e.target.value)}
+                        title="Manuell justering (overtid, tillegg, fratrekk)"
+                      />
+                    </td>
+                    <td className="p-2 text-right font-semibold tabular-nums">{sum.toLocaleString('no-NO')} kr</td>
+                    <td className="p-2">
+                      <input
+                        type="text"
+                        className="w-full border rounded px-2 py-1"
+                        value={o.note ?? ''}
+                        onChange={(e)=>setNote(a.id, targetUserId, e.target.value)}
+                        placeholder="Årsak (overtid, reise, etc.)"
+                      />
+                    </td>
+                    <td className="p-2">
+                      {reason === 'late_cancel_by_interpreter' ? (
+                        <span className="px-2 py-0.5 rounded-full border bg-yellow-50 text-yellow-800">
+                          Avlyst av tolk (&lt;14 d) → 0 kr
+                        </span>
+                      ) : a.cancelledBy ? (
+                        <span className="px-2 py-0.5 rounded-full border bg-gray-50">
+                          Avlyst ({a.cancelledBy})
+                        </span>
+                      ) : (
+                        <span className="px-2 py-0.5 rounded-full border bg-green-50 text-green-800">
+                          Aktiv
+                        </span>
+                      )}
+                    </td>
+                  </tr>
+                );
+              })}
+            </tbody>
+          </table>
+          <div className="mt-2 text-right text-sm opacity-70">
+            * Justering lagres lokalt. Når backend er klar, flytter vi feltene dit.
+          </div>
+        </div>
+      )}
+    </section>
+  );
+}
+  
   // RENDER
   if (loading) {
     return (
